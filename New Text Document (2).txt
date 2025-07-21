@@ -1,0 +1,224 @@
+Cahier des charges
+I.	Page de garde
+Nom projet : Plateforme de gestion des candidatures aux concours  
+Nom de code du projet : CandidaturePlus
+II.	Périmètre du projet
+1.	But
+Le but de ce projet est de développer une plateforme en ligne pour dématérialiser le processus de candidature aux concours organisés dans différents centres. 
+La plateforme doit simplifier et moderniser le processus pour les candidats et l'administration en intégrant les fonctionnalités suivantes :  
+-	Gestion des candidatures.  
+-	Gestion des utilisateurs et des rôles.  
+-	Notifications automatiques.  
+-	Suivi et validation des candidatures.  
+-	Reporting et génération de statistiques.  
+	
+2.	Missions
+•	Développer une interface utilisateur ergonomique permettant une navigation intuitive pour les candidats et les gestionnaires.
+•	Mettre en place une API REST avec Spring Boot pour gérer les flux de données entre le front-end et la base de données.
+•	Intégrer un système sécurisé d'authentification et de gestion des rôles.
+•	Automatiser l'envoi de notifications par email pour informer les utilisateurs de l'état de leurs candidatures.
+•	Générer des statistiques et rapports pour les gestionnaires globaux et administrateurs.
+3.	Contraintes
+- Ressources humaines : Une équipe constituée de deux développeur stagiaire sous supervision.
+- Délais serrés : Le projet doit être finalisé en 6 semaines.
+4.	Parties prenantes
+- Candidats : Soumettent, suivent et consultent leurs candidatures.  
+- Gestionnaires locaux : Accès restreint à la gestion des candidatures dans leur centre.  
+- Gestionnaires globaux : Supervision globale des candidatures et des centres.  
+- Administrateurs : Gèrent les utilisateurs, les centres et les paramètres de la plateforme.
+5.	Livrables d’entrée
+- Spécifications fonctionnelles et techniques.  
+- Architecture technique.  
+- Maquettes initiales des interfaces utilisateur.  
+6.	Livrable de sortie
+- Application web fonctionnelle.  
+- Documentation technique et utilisateur.  
+7.	Equipe de travail et rôles
+- Stagiaires : Développement de l’application (front-end, back-end, base de données).  
+- Encadrant : Supervision, validation des sprints, et support technique.  
+
+III.	Etude de l’existant
+
+
+ 
+
+
+IV.	Etude fonctionnelle
+1.	Objectifs fonctionnels
+1. Permettre aux candidats de soumettre leurs candidatures via un formulaire en ligne.  
+2. Proposer un tableau de bord personnalisé selon le rôle de l’utilisateur.  
+3. Permettre aux gestionnaires de valider ou rejeter les candidatures.  
+4. Générer des rapports et statistiques pour les gestionnaires globaux et administrateurs.   
+
+2.	Besoins fonctionnels : Fonctionnalités (user stories)
+2.1 Bloc fonctionnel : Gestion des utilisateurs
+Règle de gestion 	Description 	Type 
+RG01	L’authentification se fait via email/mot de passe pour les gestionnaires et administrateurs.	Obligatoire
+RG02	Les candidats accèdent à leur candidature via un numéro unique.	Obligatoire
+RG03	Les administrateurs gèrent les utilisateurs et leurs droits.	Obligatoire
+
+2.2 Bloc fonctionnel : Gestion des candidatures
+Règle de gestion 	Description 	Type 
+RG01	Les candidats remplissent un formulaire pour soumettre leur candidature.	Obligatoire
+RG02	Les gestionnaires locaux valident ou rejettent les candidatures.	Obligatoire
+RG03	Une notification est envoyée par email lors de chaque changement d’état.	Important
+RG04	Les candidatures sont filtrables par concours, centre, et état.	Important
+
+2.3 Bloc fonctionnel : Reporting et statistiques
+Règle de gestion 	Description 	Type 
+RG01	Les gestionnaires globaux accèdent à des statistiques agrégées.	Obligatoire
+RG02	Les rapports sont exportables au format CSV.	Important
+
+3.	Acteurs
+Acteur	Rôles
+Candidat	-	Soumettre une candidature. 
+-	Suivre une candidature.  
+Gestionnaire local	-	Valider les candidatures.
+-	Rejeter les candidatures.
+Gestionnaire global	-	Supervision et reporting global
+Administrateur	-	Gestion des utilisateurs et des paramètres.
+
+V.	Besoins non fonctionnels
+
+Performance
+•	Temps de chargement des pages inférieur à 2 secondes
+•	Capacité à gérer 500 utilisateurs simultanés
+•	Disponibilité de 99,9% (hors maintenance planifiée)
+Sécurité
+•	Authentification sécurisée avec double facteur optionnel
+•	Chiffrement des données sensibles en base de données
+•	Protection contre les injections SQL et XSS
+•	Journalisation des événements de sécurité
+Utilisabilité
+•	Interface responsive pour tous appareils (desktop, tablette, mobile)
+•	Navigation intuitive et claire
+•	Temps d'apprentissage de l'interface inférieur à 10 minutes
+Fiabilité
+•	Système de reprise après incident
+•	Sauvegarde quotidienne des données
+•	Plan de continuité en cas de panne serveur
+
+VI.	Stratégie de développement et plannification
+1.	Méthodologie de développement
+- Utilisation de la méthode **Agile Scrum**.  
+- Sprints hebdomadaires avec des livrables clairs.  
+2.	Découpage en Lots de Travail**  
+
+🔧 Sprint 0 – Initialisation & Préparation 
+Objectifs :
+•	Mise en place de l’environnement de développement (back + front).
+•	Définition du Product Backlog.
+•	Création des entités JPA : Candidat, Candidature, Centre, Concours, Utilisateur, Rôle.
+•	Maquettes UI pour candidats.
+Livrables :
+•	Environnement prêt (React, Spring Boot, DB).
+•	Maquettes validées.
+•	Base de données initialisée.
+•	Product Backlog détaillé.
+________________________________________
+👤 Sprint 1 – Fonctionnalités Candidats 
+Objectifs :
+•	Inscription et soumission de candidature (formulaire).
+•	Accès à la candidature par numéro unique.
+•	Tableau de bord personnel (état de la candidature).
+•	Historique ou statut de la soumission.
+Livrables :
+•	Interface candidat fonctionnelle.
+•	API REST côté candidature.
+•	Lien entre front et back validé pour les candidatures.
+________________________________________
+👨‍💼 Sprint 2 – Fonctionnalités Gestionnaires Locaux 
+Objectifs :
+•	Authentification via email/mot de passe.
+•	Validation/rejet des candidatures d’un centre.
+•	Interface pour visualiser et filtrer les candidatures par état, concours, centre.
+Livrables :
+•	Tableau de bord gestionnaire local.
+•	Filtres et actions (valider/rejeter).
+•	Authentification sécurisée pour ce rôle.
+________________________________________
+🌍 Sprint 3 – Fonctionnalités Gestionnaires Globaux 
+Objectifs :
+•	Accès à toutes les candidatures.
+•	Statistiques agrégées (globales).
+•	Export CSV des rapports.
+Livrables :
+•	Module de reporting opérationnel.
+•	Statistiques dynamiques.
+•	Export CSV fonctionnel.
+________________________________________
+🛠️ Sprint 4 – Fonctionnalités Administrateurs + Notifications 
+Objectifs :
+•	Gestion des utilisateurs (CRUD).
+•	Attribution des rôles (gestionnaires, candidats).
+•	Paramétrage de la plateforme (ex : ajout de concours ou centres).
+•	Intégration de l’envoi d’e-mails lors du changement d’état de la candidature.
+Livrables :
+•	Interface admin pour gestion des utilisateurs.
+•	Notifications e-mail opérationnelles (JavaMail API).
+________________________________________
+🚀 Sprint 5 – Tests, Documentation & Livraison 
+Objectifs :
+•	Tests unitaires et d’intégration.
+•	Recette fonctionnelle avec les utilisateurs tests.
+•	Finalisation de la documentation technique & utilisateur.
+•	Déploiement local (Tomcat, serveur ou Docker).
+Livrables :
+•	Application testée, validée.
+•	Documentation complète.
+•	Application livrée localement.
+
+
+
+VII.	Architecture du système
+1.	Diagrammes UML
+2.	Technologies utilisées
+Front-end : React
+
+    React : Librairie front-end pour construire une interface utilisateur dynamique et réactive.
+    React Router : Gestion de la navigation et des routes.
+    Axios : Pour consommer les API REST.
+    Formik + Yup : Gestion des formulaires et validation.
+    Material-UI / Ant Design : Librairie de composants pour un design moderne.
+    Context API : Gestion de l'état global si nécessaire.
+
+Back-end : Spring Boot
+
+    Spring Boot : Framework pour développer rapidement des applications robustes.
+    Spring Data JPA : Gestion de la persistance et mapping objet-relationnel (ORM).
+    Spring Security : Gestion de l'authentification et de l'autorisation.
+    Spring Web (Spring MVC) : Exposition des services REST.
+    Lombok : Réduction du code boilerplate (getters, setters, etc.).
+    Java Mail API : Envoi d'emails pour les notifications.
+    OpenAPI : Documentation des API.
+
+Base de données : MySQL
+
+    MySQL : Système de gestion de bases de données relationnelles (RDBMS).
+    Flyway : Gestion des migrations de base de données.
+
+Autres
+
+    Postman : Test des API.
+    GitHub/GitLab : Suivi du code source et intégration continue.
+3.	Architecture logicielle
+- Front-end (React) ↔ API REST (Spring Boot) ↔ Base de données (MySQL).  
+
+
+
+
+VIII.	Annexe
+- Documentation technique et utilisateur.  
+- Guide d’installation.  
+
+
+
+
+
+
+
+
+
+
+
+
