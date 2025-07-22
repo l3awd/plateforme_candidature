@@ -1,0 +1,9 @@
+# ignore toutes les dépendances npm
+node_modules/
+
+# dossiers de build
+dist/
+build/
+
+# logs
+*.log
