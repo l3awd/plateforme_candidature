@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CandidaturePlus - Backend API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .api-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .api-link {
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .api-link:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .frontend-link {
+            background: #28a745;
+            color: white;
+            padding: 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            display: block;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .frontend-link:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 CandidaturePlus - Backend API</h1>
+        
+        <div class="info">
+            <h3>✅ Backend Spring Boot démarré avec succès!</h3>
+            <p><strong>Port:</strong> 8080</p>
+            <p><strong>Base de données:</strong> MySQL (candidature_plus)</p>
+            <p><strong>Authentification:</strong> admin / 1234</p>
+        </div>
+
+        <a href="http://localhost:3000" class="frontend-link">
+            🌐 Accéder à l'application frontend (React)
+        </a>
+
+        <h3>📋 Endpoints API disponibles:</h3>
+        <div class="api-links">
+            <a href="/api/" class="api-link">📊 Accueil API</a>
+            <a href="/api/health" class="api-link">❤️ Santé</a>
+            <a href="/api/candidats" class="api-link">👥 Candidats</a>
+            <a href="/api/concours" class="api-link">🏆 Concours</a>
+            <a href="/api/specialites" class="api-link">📚 Spécialités</a>
+            <a href="/api/centres" class="api-link">🏢 Centres</a>
+        </div>
+
+        <div class="info">
+            <h4>🔧 Instructions:</h4>
+            <ol>
+                <li>Le backend Spring Boot est maintenant actif sur ce port (8080)</li>
+                <li>Le frontend React devrait démarrer sur le port 3000</li>
+                <li>Utilisez les identifiants <strong>admin/1234</strong> pour vous connecter</li>
+                <li>Les APIs REST sont disponibles sous <code>/api/*</code></li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
