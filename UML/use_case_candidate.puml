@@ -1,0 +1,21 @@
+@startuml SystemeDeGestionDesCandidats
+left to right direction
+
+actor Candidat
+
+rectangle "Système de Gestion des Candidats" {
+  usecase "Soumettre une candidature" as UC1
+  usecase "Suivre l'état de la candidature" as UC2
+  usecase "Recevoir des notifications" as UC3
+  usecase "Consulter les résultats" as UC4
+
+  UC1 <|-- UC2 : inclut
+  UC1 <|-- UC3 : inclut
+  UC2 <|-- UC4 : inclut
+}
+
+Candidat --> UC1
+Candidat --> UC2
+Candidat --> UC3
+Candidat --> UC4
+@enduml

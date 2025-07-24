@@ -1,0 +1,41 @@
+@startuml SystemeDeGestionDesCandidats
+left to right direction
+
+actor Candidat
+actor GestionnaireLocal
+actor GestionnaireGlobal
+actor Administrateur
+
+rectangle "Système de Gestion des Candidats" {
+  usecase "Soumettre une candidature" as UC1
+  usecase "Suivre l'état de la candidature" as UC2
+  usecase "Recevoir des notifications" as UC3
+  usecase "Consulter les résultats" as UC4
+  usecase "Valider les candidatures" as UC5
+  usecase "Communiquer avec les candidats" as UC6
+  usecase "Gérer les places disponibles" as UC7
+  usecase "Superviser les candidatures" as UC8
+  usecase "Configurer les concours" as UC9
+  usecase "Générer des rapports" as UC10
+  usecase "Gérer les comptes utilisateurs" as UC11
+  usecase "Configurer les paramètres de la plateforme" as UC12
+  usecase "Gérer les droits d'accès" as UC13
+}
+
+GestionnaireLocal <|-- GestionnaireGlobal
+GestionnaireGlobal <|-- Administrateur
+
+Candidat --> UC1
+Candidat --> UC2
+Candidat --> UC3
+Candidat --> UC4
+GestionnaireLocal --> UC5
+GestionnaireLocal --> UC6
+GestionnaireLocal --> UC7
+GestionnaireGlobal --> UC8
+GestionnaireGlobal --> UC9
+GestionnaireGlobal --> UC10
+Administrateur --> UC11
+Administrateur --> UC12
+Administrateur --> UC13
+@enduml

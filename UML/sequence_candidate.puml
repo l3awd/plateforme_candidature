@@ -1,0 +1,20 @@
+@startuml SystemeDeGestionDesCandidats
+actor Candidat
+participant "Système de Gestion des Candidats" as P
+
+Candidat -> P: Soumettre une candidature
+P -> P: Valider les données de la candidature
+P -> P: Générer un ID unique
+P -> Candidat: Confirmation et ID unique
+
+Candidat -> P: Suivre l'état de la candidature
+P -> P: Récupérer l'état de la candidature
+P -> Candidat: Afficher l'état
+
+Candidat -> P: Recevoir des notifications
+P -> Candidat: Envoyer une notification par email/SMS
+
+Candidat -> P: Consulter les résultats
+P -> P: Récupérer les résultats
+P -> Candidat: Afficher les résultats
+@enduml

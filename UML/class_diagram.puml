@@ -1,0 +1,41 @@
+@startuml SystemeDeGestionDesCandidats
+class Systeme {
+  +soumettreCandidature()
+  +suivreEtatCandidature()
+  +envoyerNotifications()
+  +consulterResultats()
+}
+
+class Candidat {
+  -nom
+  -email
+  -telephone
+  -idUnique
+  +soumettreCandidature()
+}
+
+class GestionnaireLocal {
+  +validerCandidatures()
+  +communiquerAvecCandidats()
+  +gererPlaces()
+}
+
+class GestionnaireGlobal {
+  +superviserCandidatures()
+  +configurerConcours()
+  +genererRapports()
+}
+
+class Administrateur {
+  +gererComptesUtilisateurs()
+  +configurerParametresPlateforme()
+  +gererDroitsAcces()
+}
+
+GestionnaireLocal <|-- GestionnaireGlobal
+GestionnaireGlobal <|-- Administrateur
+Systeme "1" -- "*" Candidat
+Systeme "1" -- "*" GestionnaireLocal
+Systeme "1" -- "*" GestionnaireGlobal
+Systeme "1" -- "*" Administrateur
+@enduml

@@ -1,0 +1,13 @@
+@startuml CandidateManagementSystem
+actor User
+
+rectangle "Candidate Management System" {
+  usecase "Login" as UC1
+  usecase "Logout" as UC2
+  usecase "Password Recovery" as UC3
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+@enduml
