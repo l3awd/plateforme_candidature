@@ -53,7 +53,7 @@ cd ..
 
 # Attente du backend (10 secondes)
 echo "Attente du backend (10 secondes)..."
-sleep 10
+sleep 1
 
 # Démarrer le frontend
 cd frontend
