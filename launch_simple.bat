@@ -2,7 +2,6 @@
 echo ================================================
 echo    CANDIDATURE PLUS - LANCEMENT SIMPLIFIE
 echo ================================================
-echo.
 
 REM Aller dans le bon repertoire
 cd /d "c:\Users\pc\Desktop\New folder (6)\plateforme_candidature"
