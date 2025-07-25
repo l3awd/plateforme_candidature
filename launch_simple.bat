@@ -47,7 +47,7 @@ echo.
 REM Demarrer le backend
 cd ..\backend
 echo Demarrage du backend Spring Boot...
-start "Backend - Spring Boot" cmd /k "cd /d \"c:\Users\pc\Desktop\New folder (6)\plateforme_candidature\backend\target\" && java -jar candidatureplus-0.0.1-SNAPSHOT.jar"
+start "Backend - Spring Boot" cmd /k "cd /d \"c:\Users\pc\Desktop\New folder (6)\plateforme_candidature\backend\" && java -jar target\candidatureplus-0.0.1-SNAPSHOT.jar"
 
 echo Attente du backend (10 secondes)...
 ping 127.0.0.1 -n 11 > nul
