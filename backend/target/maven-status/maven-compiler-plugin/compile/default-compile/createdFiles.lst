@@ -1,5 +1,6 @@
 com\example\candidatureplus\entity\ConcoursSpecialite.class
 com\example\candidatureplus\entity\Document.class
+com\example\candidatureplus\dto\CandidatureResponse.class
 com\example\candidatureplus\entity\LogAction.class
 com\example\candidatureplus\entity\Specialite.class
 com\example\candidatureplus\entity\Notification$TypeDestinataire.class
@@ -7,11 +8,14 @@ com\example\candidatureplus\repository\SpecialiteRepository.class
 com\example\candidatureplus\entity\Candidature.class
 com\example\candidatureplus\repository\UtilisateurRepository.class
 com\example\candidatureplus\entity\Utilisateur.class
+com\example\candidatureplus\dto\CandidatureRequest.class
 com\example\candidatureplus\entity\Centre.class
 com\example\candidatureplus\controller\WebController.class
+com\example\candidatureplus\controller\CandidatureController.class
 com\example\candidatureplus\controller\MainController.class
 com\example\candidatureplus\repository\CandidatureRepository.class
 com\example\candidatureplus\controller\TestController.class
+com\example\candidatureplus\dto\CandidatureRequest$CandidatData.class
 com\example\candidatureplus\CandidaturePlusApplication.class
 com\example\candidatureplus\entity\Document$TypeDocument.class
 com\example\candidatureplus\repository\CandidatRepository.class

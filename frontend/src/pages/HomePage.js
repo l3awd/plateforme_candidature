@@ -16,7 +16,9 @@ import {
   PersonAdd as PersonAddIcon,
   Login as LoginIcon,
   Assessment as AssessmentIcon,
-  School as SchoolIcon
+  School as SchoolIcon,
+  Work as WorkIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
 
 const HomePage = () => {
@@ -26,10 +28,16 @@ const HomePage = () => {
     navigate('/login');
   };
 
-
   const handleCandidatureClick = () => {
-    // Navigation vers le formulaire de candidature
     navigate('/candidature');
+  };
+
+  const handlePostesClick = () => {
+    navigate('/postes');
+  };
+
+  const handleSuiviClick = () => {
+    navigate('/suivi');
   };
 
   const features = [
@@ -61,7 +69,6 @@ const HomePage = () => {
           <Button color="inherit" onClick={handleLoginClick} startIcon={<LoginIcon />}>
             Connexion Gestionnaire
           </Button>
-  
         </Toolbar>
       </AppBar>
 
@@ -81,13 +88,13 @@ const HomePage = () => {
           <Typography variant="h5" component="p" sx={{ mb: 4, opacity: 0.9 }}>
             Simplifiez votre processus de candidature aux concours avec notre solution moderne et sécurisée
           </Typography>
-          <Box sx={{ mt: 4 }}>
+          <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button
               variant="contained"
               size="large"
               onClick={handleCandidatureClick}
+              startIcon={<PersonAddIcon />}
               sx={{
-                mr: 2,
                 py: 1.5,
                 px: 4,
                 fontSize: '1.1rem',
@@ -102,7 +109,8 @@ const HomePage = () => {
             <Button
               variant="outlined"
               size="large"
-              onClick={() => navigate('/suivi')}
+              onClick={handlePostesClick}
+              startIcon={<WorkIcon />}
               sx={{
                 py: 1.5,
                 px: 4,
@@ -115,7 +123,7 @@ const HomePage = () => {
                 }
               }}
             >
-              Suivre ma Candidature
+              Voir les Postes
             </Button>
           </Box>
         </Container>
@@ -162,7 +170,7 @@ const HomePage = () => {
         </Grid>
       </Container>
 
-      {/* Section Accès Rapide */}
+      {/* Section Accès Candidat */}
       <Box sx={{ backgroundColor: '#f5f5f5', py: 6 }}>
         <Container maxWidth="md">
           <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
@@ -170,21 +178,33 @@ const HomePage = () => {
               Accès Candidat
             </Typography>
             <Typography variant="body1" sx={{ mb: 3 }}>
-              Vous avez déjà soumis une candidature ? Saisissez votre numéro unique pour accéder à votre dossier.
+              Explorez les opportunités disponibles ou suivez l'état de votre candidature
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => navigate('/candidature')}
+                onClick={handlePostesClick}
+                startIcon={<WorkIcon />}
+                sx={{ minWidth: 200 }}
+              >
+                Voir les Postes
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={handleCandidatureClick}
                 startIcon={<PersonAddIcon />}
+                sx={{ minWidth: 200 }}
               >
                 Nouvelle Candidature
               </Button>
               <Button
                 variant="outlined"
                 size="large"
-                onClick={() => navigate('/suivi')}
+                onClick={handleSuiviClick}
+                startIcon={<SearchIcon />}
+                sx={{ minWidth: 200 }}
               >
                 Suivre ma Candidature
               </Button>

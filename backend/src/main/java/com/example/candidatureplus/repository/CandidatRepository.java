@@ -12,6 +12,8 @@ public interface CandidatRepository extends JpaRepository<Candidat, Integer> {
     
     Optional<Candidat> findByCin(String cin);
     
+    Optional<Candidat> findByEmail(String email);
+    
     boolean existsByNumeroUnique(String numeroUnique);
     
     boolean existsByCin(String cin);

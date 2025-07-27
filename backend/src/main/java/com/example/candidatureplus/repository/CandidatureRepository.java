@@ -16,10 +16,15 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Intege
     
     List<Candidature> findByCentre_Id(Integer centreId);
     
+    List<Candidature> findBySpecialite_Id(Integer specialiteId);
+    
     List<Candidature> findByEtat(Candidature.Etat etat);
+    
+    boolean existsByCandidat_IdAndConcours_Id(Integer candidatId, Integer concoursId);
     
     @Query("SELECT c FROM Candidature c WHERE c.centre.id = :centreId AND c.etat = :etat")
     List<Candidature> findByCentreIdAndEtat(@Param("centreId") Integer centreId, @Param("etat") Candidature.Etat etat);
     
-    boolean existsByCandidat_IdAndConcours_Id(Integer candidatId, Integer concoursId);
+    @Query("SELECT c FROM Candidature c WHERE c.concours.id = :concoursId AND c.specialite.id = :specialiteId")
+    List<Candidature> findByConcoursIdAndSpecialiteId(@Param("concoursId") Integer concoursId, @Param("specialiteId") Integer specialiteId);
 }

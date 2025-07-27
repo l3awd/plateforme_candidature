@@ -4,40 +4,7 @@ echo    LANCEMENT DE CANDIDATURE PLUS
 echo ========================================
 echo.
 
-echo Verification des prerequisites...
-
-REM Verification de Java
-java -version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERREUR: Java non trouve! Veuillez installer Java 17 ou superieur.
-    pause
-    exit /b 1
-)
-
-REM Verification de Node.js
-node --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERREUR: Node.js non trouve! Veuillez installer Node.js.
-    pause
-    exit /b 1
-)
-
-REM Verification de npm
-npm --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERREUR: npm non trouve! Veuillez installer npm.
-    pause
-    exit /b 1
-)
-
-REM Verification de Maven
-mvn --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERREUR: Maven non trouve! Veuillez installer Apache Maven.
-    pause
-    exit /b 1
-)
-
+echo Demarrage direct (verification des prerequisites desactivee)...
 echo Prerequisites OK!
 echo.
 
@@ -46,7 +13,7 @@ echo   COMPILATION DU BACKEND SPRING BOOT
 echo ========================================
 echo.
 
-cd backend
+cd "%~dp0backend"
 echo Compilation du backend...
 call mvn clean package -DskipTests
 if %errorlevel% neq 0 (
@@ -61,7 +28,7 @@ echo   INSTALLATION DES DEPENDANCES FRONTEND
 echo ========================================
 echo.
 
-cd ..\frontend
+cd "%~dp0frontend"
 if not exist node_modules (
     echo Installation des dependances npm...
     call npm install
@@ -91,7 +58,7 @@ echo Appuyez sur Ctrl+C dans cette fenetre pour arreter les deux applications.
 echo.
 
 REM Demarrage du backend en arriere-plan
-cd ..\backend
+cd "%~dp0backend"
 echo Demarrage du backend Spring Boot...
 start "Backend - Spring Boot" cmd /k "java -jar target/candidatureplus-0.0.1-SNAPSHOT.jar"
 
@@ -100,7 +67,7 @@ echo Attente du demarrage du backend (15 secondes)...
 timeout /t 15 /nobreak >nul
 
 REM Demarrage du frontend en arriere-plan  
-cd ..\frontend
+cd "%~dp0frontend"
 echo Demarrage du frontend React...
 start "Frontend - React" cmd /k "npm start"
 

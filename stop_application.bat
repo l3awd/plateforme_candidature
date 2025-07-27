@@ -1,3 +1,4 @@
+
 @echo off
 echo ========================================
 echo    ARRET DE CANDIDATURE PLUS

@@ -1,0 +1,95 @@
+Section 1 : Introduction et contexte
+1.1 Objectif du projet
+
+L'objectif est de créer une plateforme en ligne pour dématérialiser le processus de candidature aux concours organisés dans différents centres. Cette plateforme vise à simplifier et moderniser le processus pour les candidats et l'administration.
+1.2 Parties prenantes
+
+    Gestionnaires globaux (accès à tous les centres)
+
+    Gestionnaires locaux (accès à un centre spécifique)
+
+    Administrateurs (gestionnaires avec habilitations étendues)
+
+    Candidats aux concours
+
+1.3 Portée du projet
+
+La plateforme devra gérer l'ensemble du processus de candidature, de l'inscription initiale jusqu'à la confirmation de la participation au concours, en tenant compte des différents niveaux d'accès et de gestion.
+Section 2 : Spécifications fonctionnelles
+2.1 Fonctionnalités pour les candidats
+
+    Accès via un formulaire sans création de compte
+
+    Suivi de l'état de la candidature via un numéro unique
+
+    Réception de notifications (par email et/ou SMS)
+
+    Consultation des résultats
+
+2.2 Détails du formulaire d'inscription
+
+    Informations personnelles (nom, prénom, CIN, date et lieu de naissance, adresse, etc.)
+
+    Coordonnées (email, numéro de téléphone)
+
+    Choix du concours
+
+    Sélection de la spécialité (parmi celles proposées pour le concours choisi)
+
+    Choix du centre d'examen (parmi ceux disponibles pour la spécialité choisie)
+
+    Niveau d'études
+
+    Diplôme(s) obtenu(s) avec spécialité(s)
+
+    Expérience professionnelle
+
+    Téléchargement des documents requis (CIN, CV, diplômes, etc.)
+
+    Case à cocher pour accepter les conditions d'utilisation
+
+    Génération automatique d’un numéro unique de candidature
+
+2.3 Fonctionnalités pour les gestionnaires locaux
+
+    Accès aux candidatures de leur centre
+
+    Validation ou rejet des candidatures basé sur l’adéquation entre la spécialité du diplôme et celle du concours
+
+    Communication avec les candidats
+
+    Gestion des places disponibles dans leur centre par spécialité
+
+2.4 Fonctionnalités pour les gestionnaires globaux
+
+    Accès aux candidatures de tous les centres
+
+    Supervision globale du processus de candidature
+
+    Configuration des concours avec leurs spécialités associées
+
+    Attribution des spécialités aux différents centres
+
+    Génération de rapports et statistiques par concours, spécialité et centre
+
+2.5 Fonctionnalités pour les administrateurs
+
+    Toutes les fonctionnalités des gestionnaires globaux
+
+    Gestion des comptes utilisateurs (création, modification, suppression)
+
+    Configuration des paramètres de la plateforme
+
+    Gestion des droits d’accès
+
+2.6 Fonctionnalités générales
+
+    Interface responsive (adaptée aux ordinateurs, tablettes et smartphones)
+
+    Système de recherche et de filtrage des candidatures par concours, spécialité, centre et diplôme
+
+    Tableau de bord personnalisé selon le rôle de l’utilisateur
+
+    Système de vérification des doublons de candidatures
+
+    Vérification automatique de l’adéquation entre la spécialité du diplôme et celle du concours
