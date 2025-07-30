@@ -22,21 +22,21 @@ INSERT IGNORE INTO Specialite (nom, code, description, actif, date_creation) VAL
 INSERT IGNORE INTO Concours (nom, description, date_debut_candidature, date_fin_candidature, date_examen, conditions_participation, documents_requis, actif, date_creation) VALUES
 ('Concours Attaché d\'Administration - 2025', 
  'Recrutement d\'attachés d\'administration pour le Ministère de l\'Économie et des Finances', 
- '2025-01-15', '2025-03-15', '2025-04-20',
+ '2025-07-01', '2025-08-31', '2025-09-15',
  'Être titulaire d\'un diplôme de niveau Bac+3 minimum\nÂge maximum: 30 ans\nNationalité marocaine',
  'Copie légalisée du diplôme\nCopie de la CIN\nCV détaillé\nPhoto d\'identité\nCertificat de scolarité',
  true, NOW()),
 
 ('Concours Inspecteur des Finances - 2025',
  'Recrutement d\'inspecteurs des finances pour le contrôle et l\'audit',
- '2025-02-01', '2025-04-01', '2025-05-10',
+ '2025-07-01', '2025-08-31', '2025-09-20',
  'Être titulaire d\'un diplôme de niveau Bac+5 minimum\nSpécialisation en finance, économie ou comptabilité\nÂge maximum: 32 ans',
  'Copie légalisée du diplôme\nCopie de la CIN\nCV détaillé\nPhoto d\'identité\nRelevé de notes du diplôme\nCertificat médical',
  true, NOW()),
 
 ('Concours Technicien Spécialisé en Informatique - 2025',
  'Recrutement de techniciens spécialisés en informatique et systèmes d\'information',
- '2025-01-20', '2025-03-20', '2025-04-25',
+ '2025-07-01', '2025-08-31', '2025-09-25',
  'Être titulaire d\'un diplôme de niveau Bac+2 minimum en informatique\nÂge maximum: 28 ans',
  'Copie légalisée du diplôme\nCopie de la CIN\nCV détaillé\nPhoto d\'identité\nCertificats de formation',
  true, NOW());

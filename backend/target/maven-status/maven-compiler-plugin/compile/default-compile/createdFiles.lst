@@ -30,4 +30,5 @@ com\example\candidatureplus\entity\Notification$TypeNotification.class
 com\example\candidatureplus\entity\Notification.class
 com\example\candidatureplus\repository\CentreRepository.class
 com\example\candidatureplus\entity\Concours.class
+com\example\candidatureplus\config\SecurityConfig.class
 com\example\candidatureplus\repository\ConcoursRepository.class

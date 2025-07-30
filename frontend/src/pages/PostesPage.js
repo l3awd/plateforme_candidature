@@ -57,16 +57,37 @@ const PostesPage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoading(true);
+        setError('');
+        
         const [concoursRes, centresRes, specialitesRes] = await Promise.all([
           axios.get('http://localhost:8080/api/concours'),
           axios.get('http://localhost:8080/api/centres'),
           axios.get('http://localhost:8080/api/specialites')
         ]);
-        setConcours(concoursRes.data);
-        setCentres(centresRes.data);
-        setSpecialites(specialitesRes.data);
+        
+        // Validation des données reçues
+        const concoursData = Array.isArray(concoursRes.data) ? concoursRes.data : [];
+        const centresData = Array.isArray(centresRes.data) ? centresRes.data : [];
+        const specialitesData = Array.isArray(specialitesRes.data) ? specialitesRes.data : [];
+        
+        setConcours(concoursData);
+        setCentres(centresData);
+        setSpecialites(specialitesData);
+        
+        console.log('Données chargées:', {
+          concours: concoursData.length,
+          centres: centresData.length,
+          specialites: specialitesData.length
+        });
+        
       } catch (err) {
-        setError('Erreur lors du chargement des données');
+        console.error('Erreur lors du chargement:', err);
+        setError('Erreur lors du chargement des données. Vérifiez que le backend est démarré.');
+        // Initialiser avec des tableaux vides en cas d'erreur
+        setConcours([]);
+        setCentres([]);
+        setSpecialites([]);
       } finally {
         setLoading(false);
       }
@@ -76,14 +97,17 @@ const PostesPage = () => {
 
   // Filtrage des données
   const getFilteredConcours = () => {
+    if (!Array.isArray(concours)) return [];
     return concours.filter(c => {
       const now = new Date();
-      const finCandidature = new Date(c.dateFinCandidature);
-      return c.actif && finCandidature > now;
+      const debut = new Date(c.dateDebutCandidature);
+      const fin = new Date(c.dateFinCandidature);
+      return c.actif && now >= debut && now <= fin;
     });
   };
 
   const getFilteredCentres = () => {
+    if (!Array.isArray(centres)) return [];
     if (!selectedConcours) return centres.filter(c => c.actif);
     
     // Logique pour filtrer les centres selon le concours sélectionné
@@ -92,6 +116,7 @@ const PostesPage = () => {
   };
 
   const getFilteredSpecialites = () => {
+    if (!Array.isArray(specialites)) return [];
     if (!selectedConcours) return specialites.filter(s => s.actif);
     
     // Logique pour filtrer les spécialités selon le concours sélectionné

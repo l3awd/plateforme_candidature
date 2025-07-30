@@ -57,11 +57,23 @@ const CandidaturePage = () => {
           axios.get('http://localhost:8080/api/specialites'),
           axios.get('http://localhost:8080/api/centres')
         ]);
-        setConcours(concoursRes.data);
-        setSpecialites(specialitesRes.data);
-        setCentres(centresRes.data);
+        
+        // Validation des données reçues
+        const concoursData = Array.isArray(concoursRes.data) ? concoursRes.data : [];
+        const specialitesData = Array.isArray(specialitesRes.data) ? specialitesRes.data : [];
+        const centresData = Array.isArray(centresRes.data) ? centresRes.data : [];
+        
+        setConcours(concoursData);
+        setSpecialites(specialitesData);
+        setCentres(centresData);
+        
       } catch (err) {
-        setError('Erreur lors du chargement des données');
+        console.error('Erreur lors du chargement:', err);
+        setError('Erreur lors du chargement des données. Vérifiez que le backend est démarré.');
+        // Initialiser avec des tableaux vides en cas d'erreur
+        setConcours([]);
+        setSpecialites([]);
+        setCentres([]);
       }
     };
     loadData();

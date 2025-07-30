@@ -1,13 +1,17 @@
 @echo off
 echo ========================================
-echo   Insertion des donnees de test
-echo   CandidaturePlus Database Setup
+echo   INSERTION DES DONNEES DE TEST
 echo ========================================
-
 echo.
-echo Connexion a MySQL et insertion des donnees de test...
 
-mysql -u root -p candidature_plus < insert_test_data.sql
+echo Execution du script insert_test_data.sql...
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -e "source insert_test_data.sql"
+
+if %errorlevel% neq 0 (
+    echo ERREUR: Echec de l'execution du script!
+    pause
+    exit /b 1
+)
 
 if %ERRORLEVEL% EQU 0 (
     echo.
