@@ -1,0 +1,89 @@
+@startuml UseCaseGestionnaireLocal
+
+left to right direction
+
+actor "Gestionnaire Local" as GL
+actor "Candidat" as C
+actor "Système" as S
+
+rectangle "Centre de Formation - Gestion Locale" {
+  
+  ' ===== CANDIDATURES =====
+  package "Gestion des Candidatures" {
+    usecase "Consulter liste candidatures" as UC1
+    usecase "Valider candidature" as UC2
+    usecase "Rejeter candidature" as UC3
+    usecase "Filtrer par spécialité" as UC4
+    usecase "Exporter candidatures" as UC5
+    usecase "Imprimer listes" as UC6
+  }
+  
+  ' ===== COMMUNICATION =====
+  package "Communication" {
+    usecase "Consulter contact candidat" as UC7
+    usecase "Confirmer place candidat" as UC8
+  }
+  
+  ' ===== GESTION PLACES =====
+  package "Gestion des Places" {
+    usecase "Consulter places disponibles" as UC9
+    usecase "Réserver place candidat" as UC10
+    usecase "Libérer place refusée" as UC11
+  }
+  
+  ' ===== SUIVI =====
+  package "Suivi et Rapports" {
+    usecase "Consulter historique actions" as UC12
+    usecase "Générer rapport local" as UC13
+    usecase "Consulter statistiques centre" as UC14
+  }
+  
+  ' ===== DOCUMENTS =====
+  package "Gestion Documents" {
+    usecase "Consulter documents candidat" as UC15
+    usecase "Télécharger pièces jointes" as UC16
+    usecase "Valider conformité documents" as UC17
+  }
+}
+
+' ===== RELATIONS PRINCIPALES =====
+GL --> UC1
+GL --> UC2
+GL --> UC3
+GL --> UC4
+GL --> UC5
+GL --> UC6
+GL --> UC7
+GL --> UC8
+GL --> UC9
+GL --> UC10
+GL --> UC11
+GL --> UC12
+GL --> UC13
+GL --> UC14
+GL --> UC15
+GL --> UC16
+GL --> UC17
+
+' ===== EXTENDS & INCLUDES =====
+UC2 ..> UC8 : <<include>>
+UC3 ..> UC11 : <<include>>
+UC2 ..> UC17 : <<include>>
+UC5 ..> UC4 : <<extend>>
+UC10 ..> UC9 : <<include>>
+
+' ===== INTERACTIONS AUTOMATIQUES =====
+UC2 --> S : "Envoie notification\nautomatique"
+UC3 --> S : "Envoie notification\nautomatique"
+UC8 --> S : "Envoie confirmation\nautomatique"
+
+S --> C : "Notification validation"
+S --> C : "Notification rejet"
+S --> C : "Confirmation place"
+
+note right of UC2 : "Le système envoie automatiquement\nune notification au candidat"
+note right of UC3 : "Motif de rejet obligatoire"
+note right of UC8 : "Attribution définitive de la place"
+note right of UC17 : "Vérification CIN, diplômes, etc."
+
+@enduml

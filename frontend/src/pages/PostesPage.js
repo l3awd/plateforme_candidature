@@ -38,7 +38,8 @@ import {
   Info as InfoIcon,
   PersonAdd as PersonAddIcon,
   CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  Download as DownloadIcon
 } from '@mui/icons-material';
 
 const PostesPage = () => {
@@ -352,6 +353,21 @@ const PostesPage = () => {
                         >
                           Détails
                         </Button>
+                        {concours.ficheConcours && (
+                          <Button
+                            size="small"
+                            color="secondary"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = concours.ficheConcours;
+                              link.download = `fiche-${concours.nom.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+                              link.click();
+                            }}
+                            startIcon={<DownloadIcon />}
+                          >
+                            Télécharger Fiche
+                          </Button>
+                        )}
                         <Button
                           size="small"
                           variant="contained"
@@ -506,6 +522,20 @@ const PostesPage = () => {
                 <Button onClick={() => setDetailDialog(null)}>
                   Fermer
                 </Button>
+                {detailDialog.ficheConcours && (
+                  <Button
+                    color="secondary"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = detailDialog.ficheConcours;
+                      link.download = `fiche-${detailDialog.nom.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+                      link.click();
+                    }}
+                    startIcon={<DownloadIcon />}
+                  >
+                    Télécharger Fiche
+                  </Button>
+                )}
                 <Button
                   variant="contained"
                   onClick={() => {

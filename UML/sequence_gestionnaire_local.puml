@@ -1,0 +1,186 @@
+@startuml SequenceGestionnaireLocal
+
+title Processus de Validation des Candidatures - Gestionnaire Local
+
+actor "Gestionnaire Local" as GL
+participant "Interface Web" as IW
+participant "Controller" as CTRL
+participant "Service" as SVC
+participant "Repository" as REPO
+participant "Base de Données" as BD
+participant "Service Notification" as SN
+participant "Candidat" as C
+
+== Consultation des Candidatures ==
+GL -> IW : Se connecter à la plateforme
+activate IW
+IW -> CTRL : GET /candidatures/centre/{centreId}
+activate CTRL
+CTRL -> SVC : getCandidaturesByStatus(EnCours)
+activate SVC
+SVC -> REPO : findByCentreAndEtat(centre, EN_COURS_VALIDATION)
+activate REPO
+REPO -> BD : SELECT candidatures
+activate BD
+BD --> REPO : Liste candidatures
+deactivate BD
+REPO --> SVC : List<Candidature>
+deactivate REPO
+SVC --> CTRL : CandidatureListDTO
+deactivate SVC
+CTRL --> IW : ResponseEntity<List<CandidatureDto>>
+deactivate CTRL
+IW --> GL : Affiche liste candidatures
+deactivate IW
+
+== Validation d'une Candidature ==
+GL -> IW : Cliquer "Valider candidature"
+activate IW
+IW -> CTRL : POST /candidatures/{id}/valider
+activate CTRL
+CTRL -> SVC : validerCandidature(candidatureId, gestionnaireId)
+activate SVC
+
+' Vérification des documents
+SVC -> REPO : findDocumentsByCandidature(candidatureId)
+activate REPO
+REPO -> BD : SELECT documents
+activate BD
+BD --> REPO : List<Document>
+deactivate BD
+REPO --> SVC : Documents
+deactivate REPO
+
+alt Documents complets et valides
+    ' Mise à jour de l'état
+    SVC -> REPO : updateEtat(candidatureId, VALIDEE)
+    activate REPO
+    REPO -> BD : UPDATE candidature SET etat = 'VALIDEE'
+    activate BD
+    BD --> REPO : Success
+    deactivate BD
+    REPO --> SVC : Success
+    deactivate REPO
+    
+    ' Réservation de place
+    SVC -> REPO : reserverPlace(centreId, specialiteId)
+    activate REPO
+    REPO -> BD : UPDATE centre_specialite SET places_disponibles = places_disponibles - 1
+    activate BD
+    BD --> REPO : Success
+    deactivate BD
+    REPO --> SVC : Numéro place
+    deactivate REPO
+    
+    ' Log de l'action
+    SVC -> REPO : saveLogAction(gestionnaireId, "VALIDATION_CANDIDATURE", candidatureId)
+    activate REPO
+    REPO -> BD : INSERT INTO log_action
+    activate BD
+    BD --> REPO : Success
+    deactivate BD
+    REPO --> SVC : Success
+    deactivate REPO
+    
+    ' Notification automatique
+    SVC -> SN : envoyerNotificationValidation(candidat, numeroPlace)
+    activate SN
+    SN -> BD : INSERT INTO notification
+    activate BD
+    BD --> SN : Success
+    deactivate BD
+    SN --> C : Email "Candidature validée - Place N°{numeroPlace}"
+    SN --> SVC : Notification envoyée
+    deactivate SN
+    
+    SVC --> CTRL : ValidationResponse(success=true, numeroPlace)
+    deactivate SVC
+    CTRL --> IW : ResponseEntity<ValidationResponse>
+    deactivate CTRL
+    IW --> GL : "Candidature validée avec succès - Place N°{numeroPlace}"
+    deactivate IW
+
+else Documents incomplets
+    SVC --> CTRL : ValidationResponse(success=false, "Documents incomplets")
+    deactivate SVC
+    CTRL --> IW : ResponseEntity<ErrorResponse>
+    deactivate CTRL
+    IW --> GL : "Validation impossible : documents manquants"
+    deactivate IW
+end
+
+== Rejet d'une Candidature ==
+GL -> IW : Cliquer "Rejeter candidature"
+activate IW
+IW -> IW : Afficher formulaire motif
+GL -> IW : Saisir motif rejet + Confirmer
+IW -> CTRL : POST /candidatures/{id}/rejeter
+activate CTRL
+CTRL -> SVC : rejeterCandidature(candidatureId, motif, gestionnaireId)
+activate SVC
+
+' Mise à jour avec motif
+SVC -> REPO : updateEtatAvecMotif(candidatureId, REJETEE, motif)
+activate REPO
+REPO -> BD : UPDATE candidature SET etat = 'REJETEE', motif_rejet = '{motif}'
+activate BD
+BD --> REPO : Success
+deactivate BD
+REPO --> SVC : Success
+deactivate REPO
+
+' Log de l'action
+SVC -> REPO : saveLogAction(gestionnaireId, "REJET_CANDIDATURE", candidatureId)
+activate REPO
+REPO -> BD : INSERT INTO log_action
+activate BD
+BD --> REPO : Success
+deactivate BD
+REPO --> SVC : Success
+deactivate REPO
+
+' Notification automatique de rejet
+SVC -> SN : envoyerNotificationRejet(candidat, motif)
+activate SN
+SN -> BD : INSERT INTO notification
+activate BD
+BD --> SN : Success
+deactivate BD
+SN --> C : Email "Candidature rejetée - Motif: {motif}"
+SN --> SVC : Notification envoyée
+deactivate SN
+
+SVC --> CTRL : RejetResponse(success=true)
+deactivate SVC
+CTRL --> IW : ResponseEntity<RejetResponse>
+deactivate CTRL
+IW --> GL : "Candidature rejetée avec succès"
+deactivate IW
+
+== Génération de Rapport ==
+GL -> IW : Accéder "Rapports"
+activate IW
+IW -> CTRL : GET /rapports/centre/{centreId}
+activate CTRL
+CTRL -> SVC : genererRapportCentre(centreId)
+activate SVC
+SVC -> REPO : getStatistiquesCentre(centreId)
+activate REPO
+REPO -> BD : SELECT statistiques par spécialité, état
+activate BD
+BD --> REPO : Données statistiques
+deactivate BD
+REPO --> SVC : StatistiquesDto
+deactivate REPO
+SVC --> CTRL : RapportCentreDto
+deactivate SVC
+CTRL --> IW : ResponseEntity<RapportDto>
+deactivate CTRL
+IW --> GL : Affiche rapport avec graphiques
+deactivate IW
+
+note over GL : Le gestionnaire local gère uniquement\nles candidatures de son centre
+note over SN : Toutes les notifications sont\nenvoyées automatiquement
+note over BD : Logs complets de toutes les actions\npour traçabilité
+
+@enduml

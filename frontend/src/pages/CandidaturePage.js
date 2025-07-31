@@ -17,7 +17,11 @@ import {
   CircularProgress,
   Divider,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Autocomplete,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
@@ -30,6 +34,7 @@ import {
   Work as WorkIcon,
   Send as SendIcon
 } from '@mui/icons-material';
+import { VILLES_MAROC } from '../utils/villesMaroc';
 
 const CandidaturePage = () => {
   const navigate = useNavigate();
@@ -86,10 +91,10 @@ const CandidaturePage = () => {
         return Yup.object({
           nom: Yup.string().required('Nom requis'),
           prenom: Yup.string().required('Prénom requis'),
+          genre: Yup.string().required('Civilité requise'),
           cin: Yup.string().required('CIN requis'),
           dateNaissance: Yup.date().required('Date de naissance requise'),
           lieuNaissance: Yup.string().required('Lieu de naissance requis'),
-          adresse: Yup.string().required('Adresse requise'),
           ville: Yup.string().required('Ville requise'),
           email: Yup.string().email('Email invalide').required('Email requis'),
           telephone: Yup.string().required('Téléphone requis')
@@ -119,12 +124,11 @@ const CandidaturePage = () => {
       // Informations personnelles
       nom: '',
       prenom: '',
+      genre: '',
       cin: '',
       dateNaissance: '',
       lieuNaissance: '',
-      adresse: '',
       ville: '',
-      codePostal: '',
       email: '',
       telephone: '',
       telephoneUrgence: '',
@@ -162,12 +166,11 @@ const CandidaturePage = () => {
         candidat: {
           nom: values.nom,
           prenom: values.prenom,
+          genre: values.genre,
           cin: values.cin,
           dateNaissance: values.dateNaissance,
           lieuNaissance: values.lieuNaissance,
-          adresse: values.adresse,
           ville: values.ville,
-          codePostal: values.codePostal,
           email: values.email,
           telephone: values.telephone,
           telephoneUrgence: values.telephoneUrgence,
@@ -236,14 +239,34 @@ const CandidaturePage = () => {
               />
             </Grid>
             <Grid item xs={12} md={6}>
+              <FormControl fullWidth error={formik.touched.genre && Boolean(formik.errors.genre)}>
+                <InputLabel>Civilité *</InputLabel>
+                <Select
+                  name="genre"
+                  value={formik.values.genre}
+                  onChange={formik.handleChange}
+                  label="Civilité *"
+                >
+                  <MenuItem value="Masculin">Monsieur</MenuItem>
+                  <MenuItem value="Feminin">Madame</MenuItem>
+                </Select>
+                {formik.touched.genre && formik.errors.genre && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
+                    {formik.errors.genre}
+                  </Typography>
+                )}
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 name="cin"
-                label="CIN *"
+                label="Numéro CIN *"
                 value={formik.values.cin}
                 onChange={formik.handleChange}
                 error={formik.touched.cin && Boolean(formik.errors.cin)}
                 helperText={formik.touched.cin && formik.errors.cin}
+                placeholder="Ex: AB123456"
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -270,69 +293,59 @@ const CandidaturePage = () => {
                 helperText={formik.touched.lieuNaissance && formik.errors.lieuNaissance}
               />
             </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                name="adresse"
-                label="Adresse *"
-                multiline
-                rows={2}
-                value={formik.values.adresse}
-                onChange={formik.handleChange}
-                error={formik.touched.adresse && Boolean(formik.errors.adresse)}
-                helperText={formik.touched.adresse && formik.errors.adresse}
-              />
-            </Grid>
             <Grid item xs={12} md={6}>
-              <TextField
+              <Autocomplete
                 fullWidth
-                name="ville"
-                label="Ville *"
+                options={VILLES_MAROC}
                 value={formik.values.ville}
-                onChange={formik.handleChange}
-                error={formik.touched.ville && Boolean(formik.errors.ville)}
-                helperText={formik.touched.ville && formik.errors.ville}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                name="codePostal"
-                label="Code postal"
-                value={formik.values.codePostal}
-                onChange={formik.handleChange}
+                onChange={(event, newValue) => {
+                  formik.setFieldValue('ville', newValue || '');
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    name="ville"
+                    label="Ville de résidence *"
+                    error={formik.touched.ville && Boolean(formik.errors.ville)}
+                    helperText={formik.touched.ville && formik.errors.ville}
+                    placeholder="Sélectionnez votre ville"
+                  />
+                )}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 name="email"
-                label="Email *"
+                label="Adresse e-mail *"
                 type="email"
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 error={formik.touched.email && Boolean(formik.errors.email)}
                 helperText={formik.touched.email && formik.errors.email}
+                placeholder="votre.email@example.com"
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 name="telephone"
-                label="Téléphone *"
+                label="Numéro de téléphone *"
                 value={formik.values.telephone}
                 onChange={formik.handleChange}
                 error={formik.touched.telephone && Boolean(formik.errors.telephone)}
                 helperText={formik.touched.telephone && formik.errors.telephone}
+                placeholder="06XXXXXXXX"
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 name="telephoneUrgence"
-                label="Téléphone d'urgence"
+                label="Téléphone d'urgence (optionnel)"
                 value={formik.values.telephoneUrgence}
                 onChange={formik.handleChange}
+                placeholder="Contact en cas d'urgence"
               />
             </Grid>
           </Grid>
@@ -352,43 +365,11 @@ const CandidaturePage = () => {
                 error={formik.touched.niveauEtudes && Boolean(formik.errors.niveauEtudes)}
                 helperText={formik.touched.niveauEtudes && formik.errors.niveauEtudes}
               >
-                <MenuItem value="Bac+3">Bac+3 (Licence)</MenuItem>
-                <MenuItem value="Bac+5">Bac+5 (Master)</MenuItem>
+                <MenuItem value="Bac+2">Bac+2 (DUT/BTS)</MenuItem>
+                <MenuItem value="Bac+3">Bac+3 (Licence/LP)</MenuItem>
+                <MenuItem value="Bac+5">Bac+5 (Master/Ingénieur)</MenuItem>
                 <MenuItem value="Bac+8">Bac+8 (Doctorat)</MenuItem>
               </TextField>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                name="diplomePrincipal"
-                label="Diplôme principal *"
-                value={formik.values.diplomePrincipal}
-                onChange={formik.handleChange}
-                error={formik.touched.diplomePrincipal && Boolean(formik.errors.diplomePrincipal)}
-                helperText={formik.touched.diplomePrincipal && formik.errors.diplomePrincipal}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                name="specialiteDiplome"
-                label="Spécialité du diplôme *"
-                value={formik.values.specialiteDiplome}
-                onChange={formik.handleChange}
-                error={formik.touched.specialiteDiplome && Boolean(formik.errors.specialiteDiplome)}
-                helperText={formik.touched.specialiteDiplome && formik.errors.specialiteDiplome}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                name="etablissement"
-                label="Établissement *"
-                value={formik.values.etablissement}
-                onChange={formik.handleChange}
-                error={formik.touched.etablissement && Boolean(formik.errors.etablissement)}
-                helperText={formik.touched.etablissement && formik.errors.etablissement}
-              />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
@@ -400,16 +381,54 @@ const CandidaturePage = () => {
                 onChange={formik.handleChange}
                 error={formik.touched.anneeObtention && Boolean(formik.errors.anneeObtention)}
                 helperText={formik.touched.anneeObtention && formik.errors.anneeObtention}
+                inputProps={{ min: 1980, max: new Date().getFullYear() }}
+                placeholder="Ex: 2023"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                name="diplomePrincipal"
+                label="Intitulé du diplôme *"
+                value={formik.values.diplomePrincipal}
+                onChange={formik.handleChange}
+                error={formik.touched.diplomePrincipal && Boolean(formik.errors.diplomePrincipal)}
+                helperText={formik.touched.diplomePrincipal && formik.errors.diplomePrincipal}
+                placeholder="Ex: Master en Sciences Économiques"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                name="specialiteDiplome"
+                label="Spécialité du diplôme *"
+                value={formik.values.specialiteDiplome}
+                onChange={formik.handleChange}
+                error={formik.touched.specialiteDiplome && Boolean(formik.errors.specialiteDiplome)}
+                helperText={formik.touched.specialiteDiplome && formik.errors.specialiteDiplome}
+                placeholder="Ex: Finance et Comptabilité"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                name="etablissement"
+                label="Établissement d'obtention *"
+                value={formik.values.etablissement}
+                onChange={formik.handleChange}
+                error={formik.touched.etablissement && Boolean(formik.errors.etablissement)}
+                helperText={formik.touched.etablissement && formik.errors.etablissement}
+                placeholder="Ex: Université Mohammed V"
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 name="experienceProfessionnelle"
-                label="Expérience professionnelle"
+                label="Expérience professionnelle (optionnel)"
                 multiline
-                rows={4}
-                placeholder="Décrivez votre expérience professionnelle (optionnel)"
+                rows={3}
+                placeholder="Décrivez brièvement votre expérience professionnelle pertinente"
                 value={formik.values.experienceProfessionnelle}
                 onChange={formik.handleChange}
               />
@@ -506,13 +525,13 @@ const CandidaturePage = () => {
               <strong>Informations personnelles :</strong>
             </Typography>
             <Typography>
-              {formik.values.prenom} {formik.values.nom} - CIN: {formik.values.cin}
+              {formik.values.prenom} {formik.values.nom} - {formik.values.genre === 'Masculin' ? 'Monsieur' : 'Madame'} - CIN: {formik.values.cin}
             </Typography>
             <Typography>
               Email: {formik.values.email} - Tél: {formik.values.telephone}
             </Typography>
             <Typography sx={{ mb: 2 }}>
-              Adresse: {formik.values.adresse}, {formik.values.ville}
+              Ville: {formik.values.ville}
             </Typography>
             
             <Typography variant="subtitle1" gutterBottom>

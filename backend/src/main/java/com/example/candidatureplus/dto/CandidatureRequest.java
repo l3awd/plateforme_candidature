@@ -1,5 +1,6 @@
 package com.example.candidatureplus.dto;
 
+import com.example.candidatureplus.entity.Candidat.Genre;
 import lombok.Data;
 import java.time.LocalDate;
 
@@ -15,16 +16,15 @@ public class CandidatureRequest {
         // Informations personnelles
         private String nom;
         private String prenom;
+        private Genre genre;
         private String cin;
         private LocalDate dateNaissance;
         private String lieuNaissance;
-        private String adresse;
         private String ville;
-        private String codePostal;
         private String email;
         private String telephone;
         private String telephoneUrgence;
-        
+
         // Formation
         private String niveauEtudes;
         private String diplomePrincipal;

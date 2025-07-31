@@ -20,39 +20,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(authz -> authz
-                // Endpoints publics pour les candidats
-                .requestMatchers("/api/concours/**").permitAll()
-                .requestMatchers("/api/specialites/**").permitAll()
-                .requestMatchers("/api/centres/**").permitAll()
-                .requestMatchers("/api/candidatures/soumettre").permitAll()
-                .requestMatchers("/api/candidatures/suivi/**").permitAll()
-                .requestMatchers("/api/health").permitAll()
-                .requestMatchers("/").permitAll()
-                .requestMatchers("/index.html").permitAll()
-                .requestMatchers("/api/").permitAll()
-                
-                // Endpoints protégés pour les gestionnaires
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/gestionnaire/**").hasAnyRole("GESTIONNAIRE", "ADMIN")
-                .requestMatchers("/api/candidats/**").hasAnyRole("GESTIONNAIRE", "ADMIN")
-                .requestMatchers("/api/candidatures/gestion/**").hasAnyRole("GESTIONNAIRE", "ADMIN")
-                
-                // Tout le reste nécessite une authentification
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/dashboard")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
-                .permitAll()
-            );
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authz -> authz
+                        // TEMPORAIRE : Permettre l'accès à tous les endpoints pour le développement
+                        .anyRequest().permitAll());
 
         return http.build();
     }
@@ -64,7 +36,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

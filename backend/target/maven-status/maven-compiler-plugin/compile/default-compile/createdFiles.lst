@@ -5,7 +5,9 @@ com\example\candidatureplus\entity\LogAction.class
 com\example\candidatureplus\entity\Specialite.class
 com\example\candidatureplus\entity\Notification$TypeDestinataire.class
 com\example\candidatureplus\repository\SpecialiteRepository.class
+com\example\candidatureplus\entity\Candidat$Genre.class
 com\example\candidatureplus\entity\Candidature.class
+com\example\candidatureplus\controller\DocumentController.class
 com\example\candidatureplus\repository\UtilisateurRepository.class
 com\example\candidatureplus\entity\Utilisateur.class
 com\example\candidatureplus\dto\CandidatureRequest.class

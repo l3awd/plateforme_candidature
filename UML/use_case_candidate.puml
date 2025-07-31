@@ -1,21 +1,86 @@
-@startuml SystemeDeGestionDesCandidats
+@startuml UseCaseCandidatModifie
+
 left to right direction
 
-actor Candidat
+actor "Candidat" as Candidat
+actor "Système" as Systeme
 
-rectangle "Système de Gestion des Candidats" {
-  usecase "Soumettre une candidature" as UC1
-  usecase "Suivre l'état de la candidature" as UC2
-  usecase "Recevoir des notifications" as UC3
-  usecase "Consulter les résultats" as UC4
-
-  UC1 <|-- UC2 : inclut
-  UC1 <|-- UC3 : inclut
-  UC2 <|-- UC4 : inclut
+rectangle "Plateforme de Candidature Plus" {
+  
+  ' ===== INFORMATION =====
+  package "Consultation Informations" {
+    usecase "Consulter concours disponibles" as UC1
+    usecase "Télécharger fiche concours" as UC2
+    usecase "Consulter spécialités" as UC3
+    usecase "Consulter centres formation" as UC4
+  }
+  
+  ' ===== CANDIDATURE =====
+  package "Soumission Candidature" {
+    usecase "Remplir formulaire candidature" as UC5
+    usecase "Sélectionner ville (autocomplete)" as UC6
+    usecase "Joindre documents requis" as UC7
+    usecase "Valider informations" as UC8
+    usecase "Soumettre candidature" as UC9
+  }
+  
+  ' ===== SUIVI =====
+  package "Suivi Candidature" {
+    usecase "Consulter état candidature" as UC10
+    usecase "Voir détails validation" as UC11
+    usecase "Consulter numéro de place" as UC12
+    usecase "Voir motif rejet (si rejetée)" as UC13
+  }
+  
+  ' ===== NOTIFICATIONS AUTOMATIQUES =====
+  package "Notifications Système" {
+    usecase "Recevoir confirmation soumission" as UC14
+    usecase "Recevoir notification validation" as UC15
+    usecase "Recevoir notification rejet" as UC16
+    usecase "Recevoir confirmation place" as UC17
+  }
 }
 
+' ===== RELATIONS CANDIDAT =====
 Candidat --> UC1
 Candidat --> UC2
 Candidat --> UC3
 Candidat --> UC4
+Candidat --> UC5
+Candidat --> UC6
+Candidat --> UC7
+Candidat --> UC8
+Candidat --> UC9
+Candidat --> UC10
+Candidat --> UC11
+Candidat --> UC12
+Candidat --> UC13
+
+' ===== RELATIONS SYSTÈME (AUTOMATIQUES) =====
+Systeme --> UC14
+Systeme --> UC15
+Systeme --> UC16
+Systeme --> UC17
+
+' ===== INCLUDES & EXTENDS =====
+UC5 ..> UC6 : <<include>>
+UC5 ..> UC7 : <<include>>
+UC9 ..> UC8 : <<include>>
+UC11 ..> UC12 : <<extend>>
+UC11 ..> UC13 : <<extend>>
+
+' ===== DÉCLENCHEURS AUTOMATIQUES =====
+UC9 ..> UC14 : <<trigger>>
+UC15 <.. UC12 : <<triggered by validation>>
+UC16 <.. UC13 : <<triggered by rejection>>
+UC17 <.. UC12 : <<triggered by confirmation>>
+
+note right of UC14 : "Automatique dès soumission"
+note right of UC15 : "Automatique lors validation\npar gestionnaire local"
+note right of UC16 : "Automatique lors rejet\navec motif"
+note right of UC17 : "Automatique lors confirmation\nde la place"
+note right of UC6 : "Liste déroulante avec\nrecherche Maroc uniquement"
+note right of UC7 : "CIN, diplômes, CV, photo\nValidation format et taille"
+note right of UC10 : "Via numéro unique\nPas de compte utilisateur"
+
 @enduml

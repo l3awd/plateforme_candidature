@@ -1,9 +1,9 @@
 @echo off
-echo ========================================
-echo    LANCEMENT DE CANDIDATURE PLUS
-echo ========================================
-echo.
+REM ========================================
+REM    LANCEMENT DE CANDIDATURE PLUS
+REM ========================================
 
+echo.
 echo Demarrage direct (verification des prerequisites desactivee)...
 echo Prerequisites OK!
 echo.
@@ -38,7 +38,7 @@ if not exist node_modules (
         exit /b 1
     )
 ) else (
-    echo Dependances npm deja installees.
+    echo Dependances npm deja installees. Aucune action necessaire.
 )
 
 echo.

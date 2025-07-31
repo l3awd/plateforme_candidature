@@ -1,41 +1,139 @@
-@startuml SystemeDeGestionDesCandidats
-class Systeme {
+@startuml PlatformeCandidaturePlus
+
+' ===== ENTITÉS PRINCIPALES =====
+class Candidat {
+  -id: Integer
+  -numeroUnique: String
+  -nom: String
+  -prenom: String
+  -genre: Genre {Monsieur, Madame}
+  -cin: String
+  -dateNaissance: LocalDate
+  -lieuNaissance: String
+  -ville: String
+  -email: String
+  -telephone: String
+  -telephoneUrgence: String
+  -niveauEtudes: String
+  -diplomePrincipal: String
+  -specialiteDiplome: String
+  -etablissement: String
+  -anneeObtention: Integer
+  -experienceProfessionnelle: String
+  -conditionsAcceptees: Boolean
+  -dateCreation: LocalDateTime
+  -ipCreation: String
   +soumettreCandidature()
   +suivreEtatCandidature()
-  +envoyerNotifications()
-  +consulterResultats()
 }
 
-class Candidat {
-  -nom
-  -email
-  -telephone
-  -idUnique
-  +soumettreCandidature()
+class Utilisateur {
+  -id: Integer
+  -nom: String
+  -prenom: String
+  -email: String
+  -motDePasse: String
+  -role: Role {GestionnaireLocal, GestionnaireGlobal, Administrateur}
+  -actif: Boolean
+  -dateCreation: LocalDateTime
+  -derniereConnexion: LocalDateTime
+  +seConnecter()
+  +gererCandidatures()
 }
 
-class GestionnaireLocal {
-  +validerCandidatures()
-  +communiquerAvecCandidats()
-  +gererPlaces()
+class Centre {
+  -id: Integer
+  -nom: String
+  -adresse: String
+  -ville: String
+  -telephone: String
+  -email: String
+  -actif: Boolean
+  -dateCreation: LocalDateTime
+  +gererPlacesDisponibles()
 }
 
-class GestionnaireGlobal {
-  +superviserCandidatures()
-  +configurerConcours()
-  +genererRapports()
+class Specialite {
+  -id: Integer
+  -nom: String
+  -code: String
+  -description: String
+  -actif: Boolean
+  -dateCreation: LocalDateTime
 }
 
-class Administrateur {
-  +gererComptesUtilisateurs()
-  +configurerParametresPlateforme()
-  +gererDroitsAcces()
+class Concours {
+  -id: Integer
+  -nom: String
+  -description: String
+  -dateDebutCandidature: LocalDate
+  -dateFinCandidature: LocalDate
+  -dateExamen: LocalDate
+  -conditionsParticipation: String
+  -documentsRequis: String
+  -ficheConcours: String
+  -actif: Boolean
+  -dateCreation: LocalDateTime
+  +telechargerFiche()
 }
 
-GestionnaireLocal <|-- GestionnaireGlobal
-GestionnaireGlobal <|-- Administrateur
-Systeme "1" -- "*" Candidat
-Systeme "1" -- "*" GestionnaireLocal
-Systeme "1" -- "*" GestionnaireGlobal
-Systeme "1" -- "*" Administrateur
+class Candidature {
+  -id: Integer
+  -etat: Etat {Soumise, En_Cours_Validation, Validee, Rejetee, Confirmee}
+  -motifRejet: String
+  -commentaireGestionnaire: String
+  -dateSoumission: LocalDateTime
+  -dateTraitement: LocalDateTime
+  -numeroPlace: Integer
+  +valider()
+  +rejeter()
+  +confirmer()
+}
+
+' ===== ENTITÉS DE LIAISON =====
+class ConcoursSpecialite {
+  -id: Integer
+  -nombrePlaces: Integer
+}
+
+class CentreSpecialite {
+  -id: Integer
+  -nombrePlacesDisponibles: Integer
+}
+
+' ===== ENTITÉS SUPPORT =====
+class Document {
+  -id: Integer
+  -typeDocument: TypeDocument {CIN, CV, Diplome, Releve_Notes, Photo, Autre}
+  -nomFichier: String
+  -cheminFichier: String
+  -tailleFichier: Long
+  -typeMime: String
+  -dateUpload: LocalDateTime
+  +telecharger()
+}
+
+
+
+' ===== RELATIONS =====
+Candidat ||--o{ Candidature : "soumet"
+Concours ||--o{ Candidature : "pour"
+Specialite ||--o{ Candidature : "dans"
+Centre ||--o{ Candidature : "à"
+Utilisateur ||--o{ Candidature : "traite"
+Utilisateur }o--|| Centre : "gère"
+
+Concours ||--o{ ConcoursSpecialite : "propose"
+Specialite ||--o{ ConcoursSpecialite : "disponible"
+
+Centre ||--o{ CentreSpecialite : "offre"
+Specialite ||--o{ CentreSpecialite : "dans"
+Concours ||--o{ CentreSpecialite : "pour"
+
+Candidature ||--o{ Document : "contient"
+
+note right of Candidat : "Pas de compte utilisateur\nAccès via numéro unique"
+note right of Concours : "Fiches téléchargeables\nSans accents pour compatibilité"
+note right of Candidature : "Workflow de validation\npar gestionnaires"
+
 @enduml
