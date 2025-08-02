@@ -32,10 +32,10 @@ const Dashboard = () => {
 
   const dashboardCards = [
     {
-      title: 'Candidatures',
-      description: 'Gérer les candidatures soumises',
+      title: 'Gestion des Candidatures',
+      description: 'Valider, rejeter et gérer les candidatures',
       icon: <PeopleIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      action: () => navigate('/candidatures')
+      action: () => navigate('/gestion-candidatures')
     },
     {
       title: 'Statistiques',
