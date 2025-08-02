@@ -23,6 +23,7 @@ com\example\candidatureplus\entity\CentreSpecialite.class
 com\example\candidatureplus\repository\DocumentRepository.class
 com\example\candidatureplus\service\CandidatureService.class
 com\example\candidatureplus\entity\Utilisateur$Role.class
+com\example\candidatureplus\controller\LogActionController.class
 com\example\candidatureplus\entity\Notification.class
 com\example\candidatureplus\repository\CentreRepository.class
 com\example\candidatureplus\entity\Concours.class
@@ -39,6 +40,7 @@ com\example\candidatureplus\controller\CandidatureController.class
 com\example\candidatureplus\service\LogActionService.class
 com\example\candidatureplus\repository\NotificationRepository.class
 com\example\candidatureplus\dto\CandidatureRequest$CandidatData.class
+com\example\candidatureplus\controller\NotificationController.class
 com\example\candidatureplus\dto\ValidationResponse.class
 com\example\candidatureplus\repository\CandidatRepository.class
 com\example\candidatureplus\entity\Notification$Etat.class

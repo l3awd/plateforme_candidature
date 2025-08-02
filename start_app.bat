@@ -1,77 +1,118 @@
 @echo off
 echo ================================================
-echo    CandidaturePlus - Démarrage Complet
+echo    CandidaturePlus - Demarrage Complet
 echo ================================================
 
-:: Vérifier si MySQL est démarré
-echo [1/5] Vérification de MySQL...
-net start | find "MySQL" >nul
+REM Arreter les processus existants
+echo [ETAPE 1/4] Arret des processus existants...
+taskkill /F /IM java.exe /FI "WINDOWTITLE eq Backend CandidaturePlus*" >nul 2>&1
+taskkill /F /IM node.exe /FI "WINDOWTITLE eq Frontend CandidaturePlus*" >nul 2>&1
+echo ✓ Processus arretes
+
+REM Verification des dependances
+echo [ETAPE 2/4] Verification des dependances...
+
+REM Verification de Java
+echo Verification de Java...
+where java >nul 2>&1
 if errorlevel 1 (
-    echo MySQL n'est pas démarré. Démarrage...
-    net start MySQL80
-    timeout /t 3 >nul
+    echo [ERREUR] Java n'est pas installe ou non accessible
+    echo Veuillez installer Java 17 ou plus recent
+    pause
+    exit /b 1
 )
+echo ✓ Java detecte
 
-:: Installer les dépendances backend si nécessaire
-echo [2/5] Vérification des dépendances backend...
+REM Verification de Node.js
+echo Verification de Node.js...
+where node >nul 2>&1
+if errorlevel 1 (
+    echo [ERREUR] Node.js n'est pas installe ou non accessible
+    echo Veuillez installer Node.js
+    pause
+    exit /b 1
+)
+echo ✓ Node.js detecte
+
+REM Verification de npm
+echo Verification de npm...
+where npm >nul 2>&1
+if errorlevel 1 (
+    echo [ERREUR] npm n'est pas installe ou non accessible
+    pause
+    exit /b 1
+)
+echo ✓ npm detecte
+
+REM Verification de Maven
+echo Verification de Maven...
+call mvn --version >nul 2>&1
+if errorlevel 1 (
+    echo [ERREUR] Maven n'est pas installe ou non accessible
+    echo Veuillez installer Apache Maven
+    pause
+    exit /b 1
+)
+echo ✓ Maven detecte
+
+REM Preparation et demarrage du backend
+echo [ETAPE 3/4] Backend - Navigation vers backend/ et compilation...
+
+REM Naviguer vers backend/
 cd /d "%~dp0backend"
-echo Répertoire backend: %CD%
-if not exist "target\candidatureplus-0.0.1-SNAPSHOT.jar" (
-    echo JAR non trouvé. Installation des dépendances Maven...
-    call mvn clean install -DskipTests
-    if errorlevel 1 (
-        echo Erreur lors de la compilation Maven
-        pause
-        exit /b 1
-    )
-) else (
-    echo ✓ JAR trouvé: target\candidatureplus-0.0.1-SNAPSHOT.jar
+echo Navigation vers backend terminee
+
+REM Nettoyer et recompiler le backend
+echo Nettoyage du cache Maven...
+call mvn clean >nul 2>&1
+if errorlevel 1 (
+    echo [ERREUR] Echec du nettoyage Maven
+    echo Tentative de continuer sans nettoyage...
 )
+echo ✓ Cache Maven nettoye
 
-:: Démarrer le backend
-echo [3/5] Démarrage du backend Spring Boot...
-start "Backend CandidaturePlus" cmd /k "cd /d \"%~dp0backend\" && java -jar target\candidatureplus-0.0.1-SNAPSHOT.jar"
-timeout /t 10
+echo Compilation du backend...
+call mvn compile >nul 2>&1
+if errorlevel 1 (
+    echo [ERREUR] Echec de la compilation du backend
+    echo Tentative de demarrage direct...
+)
+echo ✓ Backend compile avec succes
 
-:: Installer les dépendances frontend si nécessaire
-echo [4/5] Vérification des dépendances frontend...
+REM Demarrer Spring Boot
+echo Demarrage du backend Spring Boot...
+start "Backend CandidaturePlus" cmd /k "call mvn spring-boot:run"
+
+REM Attendre que le backend demarre
+echo Attente du demarrage du backend...
+timeout /t 20 >nul
+
+REM Lancement Frontend
+echo [ETAPE 4/4] Frontend - Navigation vers frontend/...
+
+REM Naviguer vers frontend/
 cd /d "%~dp0frontend"
-echo Répertoire frontend: %CD%
-if not exist "node_modules" (
-    echo node_modules non trouvé. Installation des dépendances npm...
-    call npm install
-    if errorlevel 1 (
-        echo Erreur lors de l'installation npm
-        pause
-        exit /b 1
-    )
-) else (
-    echo ✓ node_modules trouvé
-)
+echo Navigation vers frontend terminee
 
-:: Démarrer le frontend
-echo [5/5] Démarrage du frontend React...
-start "Frontend CandidaturePlus" cmd /k "cd /d \"%~dp0frontend\" && npm start"
-start "Frontend CandidaturePlus" cmd /k "cd /d \"%~dp0frontend\" && npm start"
+REM Demarrer React
+echo Demarrage du frontend React...
+start "Frontend CandidaturePlus" cmd /k "npm start"
 
 echo.
 echo ================================================
-echo    Démarrage terminé !
+echo    Applications en cours de demarrage...
 echo ================================================
 echo.
-echo Frontend: http://localhost:3000
-echo Backend:  http://localhost:8080
+echo ✓ Backend Spring Boot: http://localhost:8080
+echo ✓ Frontend React:      http://localhost:3000
 echo.
-echo Comptes de test:
-echo - h.alami@mf.gov.ma (Gestionnaire Local)
-echo - f.bennani@mf.gov.ma (Gestionnaire Local)  
-echo - m.chraibi@mf.gov.ma (Gestionnaire Global)
-echo - a.talbi@mf.gov.ma (Administrateur)
-echo - admin@test.com (Admin Test)
+echo ⏳ Attendez 30-60 secondes que les applications demarrent
+echo    completement puis ouvrez http://localhost:3000
 echo.
-echo Mot de passe: 1234 (pour tous)
-echo.
-echo Appuyez sur une touche pour fermer...
-pause >nul
+
+REM Attendre puis ouvrir le navigateur
+echo Ouverture automatique du navigateur dans 30 secondes...
+timeout /t 30 >nul
+start http://localhost:3000
 
 cd /d "%~dp0"

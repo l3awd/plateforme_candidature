@@ -24,6 +24,10 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpSession session) {
+        System.out.println("=== LOGIN REQUEST ===");
+        System.out.println("Email reçu: " + loginRequest.getEmail());
+        System.out.println("Password reçu: " + loginRequest.getPassword());
+
         try {
             Optional<Utilisateur> utilisateurOpt = authenticationService.authenticate(
                     loginRequest.getEmail(),
@@ -43,8 +47,10 @@ public class AuthController {
                         .body(LoginResponse.failure("Email ou mot de passe incorrect"));
             }
         } catch (Exception e) {
+            System.err.println("ERREUR DANS LOGIN: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body(LoginResponse.failure("Erreur lors de l'authentification"));
+                    .body(LoginResponse.failure("Erreur lors de l'authentification: " + e.getMessage()));
         }
     }
 
@@ -69,6 +75,31 @@ public class AuthController {
         } else {
             return ResponseEntity.status(401)
                     .body(LoginResponse.failure("Non authentifié"));
+        }
+    }
+
+    /**
+     * Endpoint de debug pour tester l'authentification
+     */
+    @PostMapping("/debug")
+    public ResponseEntity<String> debugAuth(@RequestBody LoginRequest loginRequest) {
+        try {
+            System.out.println("=== DEBUG AUTH ===");
+            System.out.println("Email reçu: " + loginRequest.getEmail());
+            System.out.println("Password reçu: " + loginRequest.getPassword());
+
+            Optional<Utilisateur> result = authenticationService.authenticate(
+                    loginRequest.getEmail(),
+                    loginRequest.getPassword());
+
+            if (result.isPresent()) {
+                return ResponseEntity.ok("Authentification réussie pour: " + result.get().getEmail());
+            } else {
+                return ResponseEntity.badRequest().body("Authentification échouée");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Erreur: " + e.getMessage());
         }
     }
 

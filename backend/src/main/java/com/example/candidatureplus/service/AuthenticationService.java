@@ -4,7 +4,6 @@ import com.example.candidatureplus.entity.Utilisateur;
 import com.example.candidatureplus.entity.LogAction;
 import com.example.candidatureplus.repository.UtilisateurRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,52 +16,81 @@ public class AuthenticationService {
     private UtilisateurRepository utilisateurRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private LogActionService logActionService;
 
     /**
      * Authentifie un utilisateur avec email et mot de passe
      */
     public Optional<Utilisateur> authenticate(String email, String password) {
+        System.out.println("=== AuthenticationService.authenticate ===");
+        System.out.println("Email: " + email);
+        System.out.println("Password: " + password);
+
         Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findByEmail(email);
+        System.out.println("Utilisateur trouvé: " + utilisateurOpt.isPresent());
 
         if (utilisateurOpt.isPresent()) {
             Utilisateur utilisateur = utilisateurOpt.get();
+            System.out.println("Utilisateur actif: " + utilisateur.getActif());
+            String motDePasse = utilisateur.getMotDePasse();
+            if (motDePasse != null && motDePasse.length() > 20) {
+                System.out.println("Hash en base: " + motDePasse.substring(0, 20) + "...");
+            } else {
+                System.out.println("Mot de passe en base: " + motDePasse);
+            }
 
             // Vérifier si l'utilisateur est actif
             if (!utilisateur.getActif()) {
+                System.out.println("Utilisateur inactif");
                 return Optional.empty();
             }
 
-            // Vérifier le mot de passe
-            if (passwordEncoder.matches(password, utilisateur.getMotDePasse())) {
+            // Vérifier le mot de passe (comparaison directe sans cryptage)
+            boolean passwordMatches = password.equals(utilisateur.getMotDePasse());
+            System.out.println("Mot de passe correspond: " + passwordMatches);
+
+            if (passwordMatches) {
                 // Mettre à jour la dernière connexion
                 utilisateur.setDerniereConnexion(LocalDateTime.now());
                 utilisateurRepository.save(utilisateur);
 
-                // Logger la connexion
-                logActionService.logAction(
-                        LogAction.TypeActeur.Utilisateur,
-                        utilisateur.getId(),
-                        "CONNEXION",
-                        "Utilisateur",
-                        utilisateur.getId().longValue());
+                // Logger la connexion (avec gestion d'erreur)
+                try {
+                    logActionService.logAction(
+                            LogAction.TypeActeur.Utilisateur,
+                            utilisateur.getId(),
+                            "CONNEXION",
+                            "Utilisateur",
+                            utilisateur.getId().longValue());
+                } catch (Exception logException) {
+                    // Ignorer les erreurs de log pour ne pas bloquer l'authentification
+                    System.err.println("Erreur de log ignorée: " + logException.getMessage());
+                }
 
+                System.out.println("Authentification réussie");
                 return Optional.of(utilisateur);
+            } else {
+                System.out.println("Mot de passe incorrect");
             }
+        } else {
+            System.out.println("Utilisateur non trouvé");
         }
 
-        // Logger la tentative de connexion échouée
-        logActionService.logAction(
-                LogAction.TypeActeur.Systeme,
-                null,
-                "TENTATIVE_CONNEXION_ECHEC",
-                "Utilisateur",
-                null,
-                "Email: " + email);
+        // Logger la tentative de connexion échouée (avec gestion d'erreur)
+        try {
+            logActionService.logAction(
+                    LogAction.TypeActeur.Systeme,
+                    null,
+                    "TENTATIVE_CONNEXION_ECHEC",
+                    "Utilisateur",
+                    null,
+                    "Email: " + email);
+        } catch (Exception logException) {
+            // Ignorer les erreurs de log
+            System.err.println("Erreur de log ignorée: " + logException.getMessage());
+        }
 
+        System.out.println("Authentification échouée");
         return Optional.empty();
     }
 
@@ -100,22 +128,27 @@ public class AuthenticationService {
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        // Vérifier l'ancien mot de passe
-        if (!passwordEncoder.matches(oldPassword, utilisateur.getMotDePasse())) {
+        // Vérifier l'ancien mot de passe (comparaison directe)
+        if (!oldPassword.equals(utilisateur.getMotDePasse())) {
             throw new RuntimeException("Ancien mot de passe incorrect");
         }
 
-        // Encoder et sauvegarder le nouveau mot de passe
-        utilisateur.setMotDePasse(passwordEncoder.encode(newPassword));
+        // Sauvegarder le nouveau mot de passe en texte clair
+        utilisateur.setMotDePasse(newPassword);
         utilisateurRepository.save(utilisateur);
 
-        // Logger l'action
-        logActionService.logAction(
-                LogAction.TypeActeur.Utilisateur,
-                utilisateurId,
-                "CHANGEMENT_MOT_DE_PASSE",
-                "Utilisateur",
-                utilisateurId.longValue());
+        // Logger l'action (avec gestion d'erreur)
+        try {
+            logActionService.logAction(
+                    LogAction.TypeActeur.Utilisateur,
+                    utilisateurId,
+                    "CHANGEMENT_MOT_DE_PASSE",
+                    "Utilisateur",
+                    utilisateurId.longValue());
+        } catch (Exception logException) {
+            // Ignorer les erreurs de log
+            System.err.println("Erreur de log ignorée: " + logException.getMessage());
+        }
     }
 
     /**
@@ -128,12 +161,17 @@ public class AuthenticationService {
         utilisateur.setActif(false);
         utilisateurRepository.save(utilisateur);
 
-        // Logger l'action
-        logActionService.logAction(
-                LogAction.TypeActeur.Utilisateur,
-                adminId,
-                "DESACTIVATION_UTILISATEUR",
-                "Utilisateur",
-                utilisateurId.longValue());
+        // Logger l'action (avec gestion d'erreur)
+        try {
+            logActionService.logAction(
+                    LogAction.TypeActeur.Utilisateur,
+                    adminId,
+                    "DESACTIVATION_UTILISATEUR",
+                    "Utilisateur",
+                    utilisateurId.longValue());
+        } catch (Exception logException) {
+            // Ignorer les erreurs de log
+            System.err.println("Erreur de log ignorée: " + logException.getMessage());
+        }
     }
 }
