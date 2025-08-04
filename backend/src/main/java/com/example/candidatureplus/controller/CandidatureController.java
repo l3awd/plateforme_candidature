@@ -4,17 +4,19 @@ import com.example.candidatureplus.entity.*;
 import com.example.candidatureplus.repository.*;
 import com.example.candidatureplus.dto.*;
 import com.example.candidatureplus.service.CandidatureService;
+import com.example.candidatureplus.service.CandidatureEnhancedService;
 import com.example.candidatureplus.service.NotificationService;
-import com.example.candidatureplus.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/candidatures")
@@ -40,10 +42,10 @@ public class CandidatureController {
     private CandidatureService candidatureService;
 
     @Autowired
-    private NotificationService notificationService;
+    private CandidatureEnhancedService candidatureEnhancedService;
 
     @Autowired
-    private AuthenticationService authenticationService;
+    private NotificationService notificationService;
 
     @PostMapping("/soumettre")
     public ResponseEntity<CandidatureResponse> soumettreCandidate(@RequestBody CandidatureRequest request) {
@@ -75,7 +77,10 @@ public class CandidatureController {
 
             if (existingCandidature) {
                 return ResponseEntity.badRequest()
-                        .body(new CandidatureResponse("Vous avez déjà une candidature pour ce concours", null));
+                        .body(CandidatureResponse.builder()
+                                .success(false)
+                                .message("Vous avez déjà une candidature pour ce concours")
+                                .build());
             }
 
             // Récupérer les entités liées
@@ -102,13 +107,37 @@ public class CandidatureController {
             // Envoyer notification d'inscription
             notificationService.envoyerNotificationInscription(candidature);
 
-            return ResponseEntity.ok(new CandidatureResponse(
-                    "Candidature soumise avec succès",
-                    candidat.getNumeroUnique()));
+            return ResponseEntity.ok(CandidatureResponse.builder()
+                    .success(true)
+                    .message("Candidature soumise avec succès")
+                    .numeroUnique(candidat.getNumeroUnique())
+                    .build());
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new CandidatureResponse("Erreur lors de la soumission: " + e.getMessage(), null));
+                    .body(CandidatureResponse.builder()
+                            .success(false)
+                            .message("Erreur lors de la soumission: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/soumettre-avec-cv")
+    public ResponseEntity<CandidatureResponse> soumettreAvecCV(
+            @RequestParam("data") String jsonData,
+            @RequestParam(value = "cv", required = false) MultipartFile cvFile) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            CandidatureRequest request = objectMapper.readValue(jsonData, CandidatureRequest.class);
+
+            CandidatureResponse response = candidatureEnhancedService.soumettreAvecCV(request, cvFile);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(CandidatureResponse.builder()
+                            .success(false)
+                            .message("Erreur lors de la soumission: " + e.getMessage())
+                            .build());
         }
     }
 
@@ -117,6 +146,22 @@ public class CandidatureController {
         try {
             List<Map<String, Object>> candidatures = candidatureService.getCandidaturesByCentre(centreId);
             return ResponseEntity.ok(candidatures);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/centre/{centreId}/etat/{etat}")
+    public ResponseEntity<List<Map<String, Object>>> getCandidaturesByCentreAndEtat(
+            @PathVariable Integer centreId,
+            @PathVariable String etat) {
+        try {
+            // Récupérer toutes les candidatures du centre et filtrer par état
+            List<Map<String, Object>> candidaturesMap = candidatureService.getCandidaturesByCentre(centreId)
+                    .stream()
+                    .filter(c -> etat.equals(c.get("etat")))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(candidaturesMap);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

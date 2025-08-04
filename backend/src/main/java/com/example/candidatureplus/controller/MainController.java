@@ -16,13 +16,13 @@ public class MainController {
 
     @Autowired
     private CandidatRepository candidatRepository;
-    
+
     @Autowired
     private ConcoursRepository concoursRepository;
-    
+
     @Autowired
     private SpecialiteRepository specialiteRepository;
-    
+
     @Autowired
     private CentreRepository centreRepository;
 
@@ -33,14 +33,14 @@ public class MainController {
         response.put("message", "Bienvenue sur l'API CandidaturePlus");
         response.put("version", "1.0");
         response.put("status", "active");
-        
+
         // Statistiques de base
         Map<String, Long> stats = new HashMap<>();
         stats.put("candidats", candidatRepository.count());
         stats.put("concours", concoursRepository.count());
         stats.put("specialites", specialiteRepository.count());
         stats.put("centres", centreRepository.count());
-        
+
         response.put("statistics", stats);
         return ResponseEntity.ok(response);
     }
@@ -54,47 +54,34 @@ public class MainController {
     @GetMapping("/candidats/{id}")
     public ResponseEntity<Candidat> getCandidatById(@PathVariable Integer id) {
         return candidatRepository.findById(id)
-            .map(candidat -> ResponseEntity.ok().body(candidat))
-            .orElse(ResponseEntity.notFound().build());
-    }
-
-    // Endpoints pour les concours
-    @GetMapping("/concours")
-    public ResponseEntity<List<Concours>> getAllConcours() {
-        return ResponseEntity.ok(concoursRepository.findAll());
-    }
-
-    @GetMapping("/concours/{id}")
-    public ResponseEntity<Concours> getConcoursById(@PathVariable Integer id) {
-        return concoursRepository.findById(id)
-            .map(concours -> ResponseEntity.ok().body(concours))
-            .orElse(ResponseEntity.notFound().build());
+                .map(candidat -> ResponseEntity.ok().body(candidat))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // Endpoints pour les spécialités
-    @GetMapping("/specialites")
+    @GetMapping("/specialites-legacy")
     public ResponseEntity<List<Specialite>> getAllSpecialites() {
         return ResponseEntity.ok(specialiteRepository.findAll());
     }
 
-    @GetMapping("/specialites/{id}")
+    @GetMapping("/specialites-legacy/{id}")
     public ResponseEntity<Specialite> getSpecialiteById(@PathVariable Integer id) {
         return specialiteRepository.findById(id)
-            .map(specialite -> ResponseEntity.ok().body(specialite))
-            .orElse(ResponseEntity.notFound().build());
+                .map(specialite -> ResponseEntity.ok().body(specialite))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // Endpoints pour les centres
-    @GetMapping("/centres")
+    @GetMapping("/centres-legacy")
     public ResponseEntity<List<Centre>> getAllCentres() {
         return ResponseEntity.ok(centreRepository.findAll());
     }
 
-    @GetMapping("/centres/{id}")
+    @GetMapping("/centres-legacy/{id}")
     public ResponseEntity<Centre> getCentreById(@PathVariable Integer id) {
         return centreRepository.findById(id)
-            .map(centre -> ResponseEntity.ok().body(centre))
-            .orElse(ResponseEntity.notFound().build());
+                .map(centre -> ResponseEntity.ok().body(centre))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // Endpoint de santé

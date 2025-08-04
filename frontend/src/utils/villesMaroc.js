@@ -50,3 +50,7 @@ export const VILLES_MAROC = [
   "Tiznit",
   "Youssoufia"
 ];
+
+// Export par défaut et nommé pour compatibilité
+export const villesMaroc = VILLES_MAROC;
+export default VILLES_MAROC;

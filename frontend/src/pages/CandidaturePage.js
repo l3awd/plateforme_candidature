@@ -21,9 +21,10 @@ import {
   Autocomplete,
   FormControl,
   InputLabel,
-  Select
+  Select,
+  Input
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
@@ -32,12 +33,24 @@ import {
   Home as HomeIcon,
   School as SchoolIcon,
   Work as WorkIcon,
-  Send as SendIcon
+  Send as SendIcon,
+  CloudUpload as UploadIcon
 } from '@mui/icons-material';
 import { VILLES_MAROC } from '../utils/villesMaroc';
+import { LIEUX_NAISSANCE_MAROC } from '../utils/lieuxNaissance';
+import { 
+  validateCIN, 
+  validateTelephone, 
+  validateTelephoneUrgence,
+  validateEmail, 
+  validateNomPrenom, 
+  validateDateNaissance, 
+  validateAnneeObtention 
+} from '../utils/validation';
 
 const CandidaturePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeStep, setActiveStep] = useState(0);
   const [concours, setConcours] = useState([]);
   const [specialites, setSpecialites] = useState([]);
@@ -45,6 +58,13 @@ const CandidaturePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [cvFile, setCvFile] = useState(null);
+  
+  // Récupérer les données de navigation (depuis PostesPage)
+  const preSelectedConcours = location.state?.concoursId;
+  const preSelectedSpecialite = location.state?.specialiteId;
+  const preSelectedCentre = location.state?.centreId;
+  const fromPostes = !!preSelectedConcours;
 
   const steps = [
     'Informations Personnelles',
@@ -84,20 +104,34 @@ const CandidaturePage = () => {
     loadData();
   }, []);
 
-  // Validation des étapes
+  // Validation des étapes avec règles personnalisées
   const getValidationSchema = (step) => {
     switch (step) {
       case 0:
         return Yup.object({
-          nom: Yup.string().required('Nom requis'),
-          prenom: Yup.string().required('Prénom requis'),
+          nom: Yup.string()
+            .test('nom-format', 'Format de nom invalide', value => !validateNomPrenom(value, 'Nom'))
+            .required('Nom requis'),
+          prenom: Yup.string()
+            .test('prenom-format', 'Format de prénom invalide', value => !validateNomPrenom(value, 'Prénom'))
+            .required('Prénom requis'),
           genre: Yup.string().required('Civilité requise'),
-          cin: Yup.string().required('CIN requis'),
-          dateNaissance: Yup.date().required('Date de naissance requise'),
+          cin: Yup.string()
+            .test('cin-format', 'Format CIN invalide', value => !validateCIN(value))
+            .required('CIN requis'),
+          dateNaissance: Yup.date()
+            .test('age-minimum', 'Vous devez avoir au moins 18 ans', value => !validateDateNaissance(value))
+            .required('Date de naissance requise'),
           lieuNaissance: Yup.string().required('Lieu de naissance requis'),
           ville: Yup.string().required('Ville requise'),
-          email: Yup.string().email('Email invalide').required('Email requis'),
-          telephone: Yup.string().required('Téléphone requis')
+          email: Yup.string()
+            .test('email-format', 'Format email invalide', value => !validateEmail(value))
+            .required('Email requis'),
+          telephone: Yup.string()
+            .test('telephone-format', 'Format téléphone invalide', value => !validateTelephone(value))
+            .required('Téléphone requis'),
+          telephoneUrgence: Yup.string()
+            .test('telephone-urgence-format', 'Format téléphone invalide', value => !validateTelephoneUrgence(value))
         });
       case 1:
         return Yup.object({
@@ -105,7 +139,9 @@ const CandidaturePage = () => {
           diplomePrincipal: Yup.string().required('Diplôme principal requis'),
           specialiteDiplome: Yup.string().required('Spécialité du diplôme requise'),
           etablissement: Yup.string().required('Établissement requis'),
-          anneeObtention: Yup.number().required('Année d\'obtention requise')
+          anneeObtention: Yup.number()
+            .test('annee-valide', 'Année invalide', value => !validateAnneeObtention(value))
+            .required('Année d\'obtention requise')
         });
       case 2:
         return Yup.object({
@@ -141,10 +177,10 @@ const CandidaturePage = () => {
       anneeObtention: '',
       experienceProfessionnelle: '',
       
-      // Candidature
-      concoursId: '',
-      specialiteId: '',
-      centreId: '',
+      // Candidature - Pré-remplir si venant des postes
+      concoursId: preSelectedConcours || '',
+      specialiteId: preSelectedSpecialite || '',
+      centreId: preSelectedCentre || '',
       conditionsAcceptees: false
     },
     validationSchema: getValidationSchema(activeStep),
@@ -266,7 +302,7 @@ const CandidaturePage = () => {
                 onChange={formik.handleChange}
                 error={formik.touched.cin && Boolean(formik.errors.cin)}
                 helperText={formik.touched.cin && formik.errors.cin}
-                placeholder="Ex: AB123456"
+                placeholder="Ex: AB123456 ou BE12345"
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -283,14 +319,23 @@ const CandidaturePage = () => {
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField
+              <Autocomplete
                 fullWidth
-                name="lieuNaissance"
-                label="Lieu de naissance *"
+                options={LIEUX_NAISSANCE_MAROC}
                 value={formik.values.lieuNaissance}
-                onChange={formik.handleChange}
-                error={formik.touched.lieuNaissance && Boolean(formik.errors.lieuNaissance)}
-                helperText={formik.touched.lieuNaissance && formik.errors.lieuNaissance}
+                onChange={(event, newValue) => {
+                  formik.setFieldValue('lieuNaissance', newValue || '');
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    name="lieuNaissance"
+                    label="Lieu de naissance *"
+                    error={formik.touched.lieuNaissance && Boolean(formik.errors.lieuNaissance)}
+                    helperText={formik.touched.lieuNaissance && formik.errors.lieuNaissance}
+                    placeholder="Sélectionnez votre lieu de naissance"
+                  />
+                )}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -335,7 +380,7 @@ const CandidaturePage = () => {
                 onChange={formik.handleChange}
                 error={formik.touched.telephone && Boolean(formik.errors.telephone)}
                 helperText={formik.touched.telephone && formik.errors.telephone}
-                placeholder="06XXXXXXXX"
+                placeholder="06XXXXXXXX ou 07XXXXXXXX"
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -345,7 +390,9 @@ const CandidaturePage = () => {
                 label="Téléphone d'urgence (optionnel)"
                 value={formik.values.telephoneUrgence}
                 onChange={formik.handleChange}
-                placeholder="Contact en cas d'urgence"
+                error={formik.touched.telephoneUrgence && Boolean(formik.errors.telephoneUrgence)}
+                helperText={formik.touched.telephoneUrgence && formik.errors.telephoneUrgence}
+                placeholder="06XXXXXXXX ou 07XXXXXXXX"
               />
             </Grid>
           </Grid>
@@ -433,12 +480,62 @@ const CandidaturePage = () => {
                 onChange={formik.handleChange}
               />
             </Grid>
+            
+            {/* Upload CV */}
+            <Grid item xs={12}>
+              <Box sx={{ border: '2px dashed #ccc', borderRadius: 2, p: 3, textAlign: 'center' }}>
+                <input
+                  accept=".pdf,.doc,.docx"
+                  style={{ display: 'none' }}
+                  id="cv-upload"
+                  type="file"
+                  onChange={(event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                      // Vérifier la taille (max 5MB)
+                      if (file.size > 5 * 1024 * 1024) {
+                        setError('Le fichier CV ne doit pas dépasser 5MB');
+                        return;
+                      }
+                      setCvFile(file);
+                      setError('');
+                    }
+                  }}
+                />
+                <label htmlFor="cv-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<UploadIcon />}
+                    sx={{ mb: 1 }}
+                  >
+                    Télécharger CV
+                  </Button>
+                </label>
+                {cvFile && (
+                  <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>
+                    ✓ {cvFile.name} ({(cvFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </Typography>
+                )}
+                <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
+                  Formats acceptés : PDF, DOC, DOCX (max 5MB)
+                </Typography>
+              </Box>
+            </Grid>
           </Grid>
         );
 
       case 2:
         return (
           <Grid container spacing={3}>
+            {fromPostes && (
+              <Grid item xs={12}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Vous avez été redirigé depuis la page des postes. Le concours est pré-sélectionné.
+                </Alert>
+              </Grid>
+            )}
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -449,6 +546,7 @@ const CandidaturePage = () => {
                 onChange={formik.handleChange}
                 error={formik.touched.concoursId && Boolean(formik.errors.concoursId)}
                 helperText={formik.touched.concoursId && formik.errors.concoursId}
+                disabled={fromPostes}
               >
                 {concours.map((c) => (
                   <MenuItem key={c.id} value={c.id}>

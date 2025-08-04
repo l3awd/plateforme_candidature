@@ -44,7 +44,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Utilisation d'un encoder sans cryptage pour simplifier
+        // Utiliser NoOpPasswordEncoder pour pas de cryptage (développement uniquement)
         return NoOpPasswordEncoder.getInstance();
     }
 }

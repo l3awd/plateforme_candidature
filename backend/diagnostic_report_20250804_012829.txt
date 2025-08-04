@@ -1,0 +1,74 @@
+RAPPORT DE DIAGNOSTIC COMPLET - 08/04/2025 01:28:29
+==============================================
+
+TESTS EXECUTES:
+1. Vérification des processus (Java, Node.js)
+2. Vérification des ports (8080, 3000)
+3. Test de connectivité backend
+4. Test des endpoints API critiques
+5. Test d'authentification
+6. Vérification de la base de données
+7. Test de connectivité frontend
+8. Test des nouvelles fonctionnalités
+9. Tests base de données approfondis
+10. Tests fonctionnels avancés
+11. Tests communication Frontend-Backend
+
+RESULTATS:
+==========
+
+SUCCES (11):
+  ✓ Java disponible
+  ✓ Version Java compatible
+  ✓ Maven disponible
+  ✓ Connexion MySQL OK
+  ✓ Base de données accessible
+  ✓ Structure Maven correcte
+  ✓ Classe principale présente
+  ✓ Configuration application présente
+  ✓ Nettoyage Maven OK
+  ✓ Compilation Maven réussie
+  ✓ Dépendances Maven OK
+
+AVERTISSEMENTS (9):
+  ⚠ Tables système non vérifiables
+  ⚠ Tests validation/rejet non testables - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ⚠ Système notifications non testable - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ⚠ Système logs non testable - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ⚠ Système statistiques non testable - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ⚠ Test CORS non réalisable - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ⚠ Connectivité API partielle
+  ⚠ Test intégration impossible - services non démarrés
+  ⚠ Frontend non accessible pour test PostesPage
+
+ERREURS (7):
+  ✗ Timeout démarrage Spring Boot
+  ✗ Données de test non accessibles - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ✗ Système BCrypt défaillant
+  ✗ Test session utilisateur échoué - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ✗ Diagnostic PostesPage échoué - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ✗ État de la base de données non vérifiable - No connection could be made because the target machine actively refused it. (localhost:8080)
+  ✗ Script de données de test manquant
+
+ANALYSE DETAILLEE:
+==================
+
+Base de données:
+- Tables système (Log_Action, Notification): À vérifier
+- Données de test: Incomplètes
+- Authentification BCrypt: À corriger
+
+Fonctionnalités avancées:
+- Gestion candidatures: Partielle
+- Système notifications: Non implémenté
+- Logs d'actions: Non implémenté
+
+Communication Frontend-Backend:
+- Configuration CORS: À vérifier
+- APIs Frontend: Partielles
+- Sessions utilisateur: À corriger
+- Intégration complète: Partielle
+
+RECOMMANDATIONS:
+================
+Consulter les recommandations détaillées dans le diagnostic

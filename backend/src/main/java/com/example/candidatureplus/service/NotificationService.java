@@ -243,4 +243,48 @@ public class NotificationService {
                 logActionService.logSystemAction("RELANCE_NOTIFICATIONS_TERMINE",
                                 "Fin de relance pour " + notificationsARelancer.size() + " notifications");
         }
+
+        /**
+         * Envoie une confirmation de candidature
+         */
+        public void envoyerConfirmationCandidature(Candidature candidature) {
+                try {
+                        SimpleMailMessage message = new SimpleMailMessage();
+                        message.setTo(candidature.getCandidat().getEmail());
+                        message.setSubject("Confirmation de votre candidature - CandidaturePlus");
+
+                        String contenu = String.format(
+                                        "Bonjour %s %s,\n\n" +
+                                                        "Votre candidature a été enregistrée avec succès.\n\n" +
+                                                        "Détails de votre candidature :\n" +
+                                                        "- Concours : %s\n" +
+                                                        "- Spécialité : %s\n" +
+                                                        "- Centre d'examen : %s\n" +
+                                                        "- Date de soumission : %s\n\n" +
+                                                        "Votre numéro de candidature unique : CAND-%d\n\n" +
+                                                        "Vous pouvez suivre l'état de votre candidature sur notre plateforme.\n\n"
+                                                        +
+                                                        "Cordialement,\n" +
+                                                        "L'équipe CandidaturePlus",
+                                        candidature.getCandidat().getPrenom(),
+                                        candidature.getCandidat().getNom(),
+                                        candidature.getConcours().getNom(),
+                                        candidature.getSpecialite().getNom(),
+                                        candidature.getCentre().getNom(),
+                                        candidature.getDateSoumission()
+                                                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")),
+                                        candidature.getId());
+
+                        message.setText(contenu);
+                        mailSender.send(message);
+
+                        logActionService.logSystemAction("CONFIRMATION_CANDIDATURE_ENVOYEE",
+                                        "Confirmation envoyée pour candidature ID: " + candidature.getId());
+
+                } catch (Exception e) {
+                        logActionService.logSystemAction("ERREUR_CONFIRMATION_CANDIDATURE",
+                                        "Erreur envoi confirmation candidature ID: " + candidature.getId() + " - "
+                                                        + e.getMessage());
+                }
+        }
 }
