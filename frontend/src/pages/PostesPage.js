@@ -155,9 +155,9 @@ const PostesPage = () => {
   const handleCandidater = (concours) => {
     navigate('/candidature', { 
       state: { 
-        preSelectedConcours: concours.id,
-        preSelectedCentre: selectedCentre,
-        preSelectedSpecialite: selectedSpecialite
+        concoursId: concours.id,
+        centreId: selectedCentre,
+        specialiteId: selectedSpecialite
       }
     });
   };

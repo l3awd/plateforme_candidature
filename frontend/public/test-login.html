@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+</head>
+<body>
+    <h1>Test de connexion</h1>
+    <button onclick="simulerConnexion()">Simuler connexion Fatima Bennani</button>
+    <button onclick="voirLocalStorage()">Voir localStorage</button>
+    <button onclick="allerGestionCandidatures()">Aller à gestion candidatures</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        async function simulerConnexion() {
+            try {
+                // Faire un vrai appel API de connexion
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include', // Important pour les cookies de session
+                    body: JSON.stringify({
+                        email: 'f.bennani@mf.gov.ma',
+                        password: '1234'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Stocker les informations utilisateur
+                    localStorage.setItem('userRole', data.role);
+                    localStorage.setItem('userEmail', data.email);
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('userName', `${data.prenom} ${data.nom}`);
+                    
+                    if (data.centreId) {
+                        localStorage.setItem('centreId', data.centreId);
+                        localStorage.setItem('centreNom', data.centreNom);
+                    }
+                    
+                    document.getElementById('output').innerHTML = 'Connexion réussie ! Session créée.';
+                } else {
+                    document.getElementById('output').innerHTML = 'Erreur: ' + data.message;
+                }
+            } catch (error) {
+                document.getElementById('output').innerHTML = 'Erreur de connexion: ' + error.message;
+            }
+        }
+        
+        function voirLocalStorage() {
+            const data = {
+                userRole: localStorage.getItem('userRole'),
+                userEmail: localStorage.getItem('userEmail'),
+                userId: localStorage.getItem('userId'),
+                userName: localStorage.getItem('userName'),
+                centreId: localStorage.getItem('centreId'),
+                centreNom: localStorage.getItem('centreNom')
+            };
+            
+            document.getElementById('output').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+        
+        function allerGestionCandidatures() {
+            window.location.href = '/gestion-candidatures';
+        }
+    </script>
+</body>
+</html>

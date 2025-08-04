@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+
+// Configuration axios pour inclure les cookies de session
+axios.defaults.withCredentials = true;
 import {
   Container,
   Paper,
@@ -24,43 +28,48 @@ const LoginPage = () => {
       .email('Email invalide')
       .required('Email requis'),
     password: Yup.string()
-      .min(6, 'Le mot de passe doit contenir au moins 6 caractères')
-      .required('Mot de passe requis'),
-    role: Yup.string()
-      .required('Rôle requis')
+      .min(4, 'Le mot de passe doit contenir au moins 4 caractères')
+      .required('Mot de passe requis')
   });
 
   const formik = useFormik({
     initialValues: {
       email: '',
-      password: '',
-      role: ''
+      password: ''
     },
     validationSchema,
     onSubmit: async (values) => {
       try {
-        // TODO: Implémenter l'authentification avec votre API Spring Boot
+        // Appel à l'API d'authentification Spring Boot
         console.log('Tentative de connexion:', values);
         
-        // Simulation de l'authentification
-        if (values.email && values.password) {
-          localStorage.setItem('userRole', values.role);
-          localStorage.setItem('userEmail', values.email);
+        const response = await axios.post('http://localhost:8080/api/auth/login', {
+          email: values.email,
+          password: values.password
+        });
+        
+        if (response.data.success) {
+          // Stocker les informations utilisateur
+          localStorage.setItem('userRole', response.data.role);
+          localStorage.setItem('userEmail', response.data.email);
+          localStorage.setItem('userId', response.data.userId);
+          localStorage.setItem('userName', `${response.data.prenom} ${response.data.nom}`);
+          
+          // Stocker le centreId si l'utilisateur en a un
+          if (response.data.centreId) {
+            localStorage.setItem('centreId', response.data.centreId);
+            localStorage.setItem('centreNom', response.data.centreNom);
+          }
+          
           navigate('/dashboard');
         } else {
-          setError('Identifiants incorrects');
+          setError(response.data.message || 'Identifiants incorrects');
         }
       } catch (err) {
         setError('Erreur de connexion. Veuillez réessayer.');
       }
     }
   });
-
-  const roles = [
-    { value: 'GestionnaireLocal', label: 'Gestionnaire Local' },
-    { value: 'GestionnaireGlobal', label: 'Gestionnaire Global' },
-    { value: 'Administrateur', label: 'Administrateur' }
-  ];
 
   return (
     <>
@@ -116,25 +125,6 @@ const LoginPage = () => {
               helperText={formik.touched.password && formik.errors.password}
               margin="normal"
             />
-
-            <TextField
-              fullWidth
-              select
-              id="role"
-              name="role"
-              label="Rôle"
-              value={formik.values.role}
-              onChange={formik.handleChange}
-              error={formik.touched.role && Boolean(formik.errors.role)}
-              helperText={formik.touched.role && formik.errors.role}
-              margin="normal"
-            >
-              {roles.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
 
             <Button
               type="submit"

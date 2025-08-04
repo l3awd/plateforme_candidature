@@ -39,6 +39,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+// Configuration axios pour inclure les cookies de session
+axios.defaults.withCredentials = true;
+
 const GestionCandidatures = () => {
   const navigate = useNavigate();
   const [candidatures, setCandidatures] = useState([]);
@@ -47,7 +50,7 @@ const GestionCandidatures = () => {
   const [success, setSuccess] = useState('');
   
   // Filtres
-  const [filtreEtat, setFiltreEtat] = useState('Soumise');
+  const [filtreEtat, setFiltreEtat] = useState('');
   const [filtreConcours, setFiltreConcours] = useState('');
   const [concours, setConcours] = useState([]);
   
@@ -75,6 +78,10 @@ const GestionCandidatures = () => {
     setLoading(true);
     setError('');
     
+    // Récupérer les valeurs localStorage à chaque appel
+    const currentUserRole = localStorage.getItem('userRole');
+    const currentCentreId = localStorage.getItem('centreId');
+    
     try {
       // Charger les concours
       const concoursRes = await axios.get('http://localhost:8080/api/concours');
@@ -82,11 +89,11 @@ const GestionCandidatures = () => {
       
       // Charger les candidatures selon le rôle
       let candidaturesRes;
-      if (userRole === 'GestionnaireLocal' && centreId) {
+      if (currentUserRole === 'GestionnaireLocal' && currentCentreId) {
         if (filtreEtat) {
-          candidaturesRes = await axios.get(`http://localhost:8080/api/candidatures/centre/${centreId}/etat/${filtreEtat}`);
+          candidaturesRes = await axios.get(`http://localhost:8080/api/candidatures/centre/${currentCentreId}/etat/${filtreEtat}`);
         } else {
-          candidaturesRes = await axios.get(`http://localhost:8080/api/candidatures/centre/${centreId}`);
+          candidaturesRes = await axios.get(`http://localhost:8080/api/candidatures/centre/${currentCentreId}`);
         }
       } else {
         // Pour gestionnaires globaux et administrateurs

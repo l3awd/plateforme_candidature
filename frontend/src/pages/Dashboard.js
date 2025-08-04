@@ -25,8 +25,13 @@ const Dashboard = () => {
   const userEmail = localStorage.getItem('userEmail');
 
   const handleLogout = () => {
+    // Nettoyer toutes les données utilisateur
     localStorage.removeItem('userRole');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('centreId');
+    localStorage.removeItem('centreNom');
     navigate('/');
   };
 
