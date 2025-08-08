@@ -65,7 +65,6 @@ com\example\candidatureplus\controller\DiagnosticController.class
 com\example\candidatureplus\repository\CandidatureRepository.class
 com\example\candidatureplus\repository\LogActionRepository.class
 com\example\candidatureplus\controller\ConcoursController.class
-com\example\candidatureplus\CandidaturePlusApplication.class
 com\example\candidatureplus\entity\Document$TypeDocument.class
 com\example\candidatureplus\entity\Candidature$Etat.class
 com\example\candidatureplus\repository\DocumentRepository.class
@@ -90,5 +89,4 @@ com\example\candidatureplus\dto\StatistiquesDto$SpecialiteCount.class
 com\example\candidatureplus\service\DocumentService.class
 com\example\candidatureplus\dto\CandidatureDetailDto$CandidatureDetailDtoBuilder.class
 com\example\candidatureplus\dto\CandidatDto.class
-com\example\candidatureplus\config\SecurityConfig.class
 com\example\candidatureplus\repository\ConcoursRepository.class
