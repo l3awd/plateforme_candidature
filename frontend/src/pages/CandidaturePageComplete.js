@@ -480,7 +480,6 @@ const CandidaturePageComplete = () => {
             <MenuItem value="BTS">BTS</MenuItem>
             <MenuItem value="Licence">Licence</MenuItem>
             <MenuItem value="Master">Master</MenuItem>
-            <MenuItem value="Doctorat">Doctorat</MenuItem>
             <MenuItem value="Diplôme d'ingénieur">Diplôme d'ingénieur</MenuItem>
             <MenuItem value="Autre">Autre</MenuItem>
           </Select>

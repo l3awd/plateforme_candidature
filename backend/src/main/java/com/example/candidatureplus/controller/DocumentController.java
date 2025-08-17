@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "http://localhost:3000")
 public class DocumentController {
 
+    // Téléchargement direct: ne pas envelopper dans ApiResponse (binaire)
     @GetMapping("/fiches/{filename}")
     public ResponseEntity<Resource> downloadFiche(@PathVariable String filename) {
         try {

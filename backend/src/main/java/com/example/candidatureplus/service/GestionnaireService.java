@@ -2,6 +2,7 @@ package com.example.candidatureplus.service;
 
 import com.example.candidatureplus.dto.CandidatureSimpleDto;
 import com.example.candidatureplus.entity.Candidature;
+import com.example.candidatureplus.entity.Utilisateur;
 import com.example.candidatureplus.repository.CandidatureRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +21,20 @@ public class GestionnaireService {
 
     public Page<CandidatureSimpleDto> getAllCandidatures(Pageable pageable) {
         Page<Candidature> candidatures = candidatureRepository.findAll(pageable);
+        return candidatures.map(this::convertToSimpleDto);
+    }
+
+    public Page<CandidatureSimpleDto> getAllCandidaturesFiltered(Utilisateur user, Pageable pageable) {
+        Page<Candidature> candidatures = candidatureRepository.findAll(pageable);
+        if (user != null && user.getRole() == Utilisateur.Role.GestionnaireLocal && user.getCentre() != null) {
+            Integer centreId = user.getCentre().getId();
+            List<CandidatureSimpleDto> filtered = candidatures.stream()
+                    .filter(c -> c.getCentre().getId().equals(centreId))
+                    .map(this::convertToSimpleDto)
+                    .collect(Collectors.toList());
+            // Retourner une Page-like simple (pas indispensable pagination stricte ici)
+            return new org.springframework.data.domain.PageImpl<>(filtered, pageable, filtered.size());
+        }
         return candidatures.map(this::convertToSimpleDto);
     }
 
@@ -38,6 +54,15 @@ public class GestionnaireService {
                 .toList();
     }
 
+    public List<CandidatureSimpleDto> getCandidaturesByFiltersForUser(Utilisateur user,
+            Long concoursId, Long specialiteId, Long centreId, String statut) {
+        // Forcer centre pour gestionnaire local
+        if (user != null && user.getRole() == Utilisateur.Role.GestionnaireLocal && user.getCentre() != null) {
+            centreId = user.getCentre().getId().longValue();
+        }
+        return getCandidaturesByFilters(concoursId, specialiteId, centreId, statut);
+    }
+
     public Optional<CandidatureSimpleDto> getCandidatureDetails(Integer candidatureId) {
         return candidatureRepository.findById(candidatureId)
                 .map(this::convertToSimpleDto);
@@ -45,11 +70,7 @@ public class GestionnaireService {
 
     public byte[] getCandidatureCV(Integer candidatureId) {
         return candidatureRepository.findById(candidatureId)
-                .map(candidature -> {
-                    // Ici nous devrions lire le fichier depuis le système de fichiers
-                    // Pour l'instant retournons null si pas de CV
-                    return candidature.getCvFichier() != null ? new byte[0] : null;
-                })
+                .map(candidature -> candidature.getCvFichier() != null ? new byte[0] : null)
                 .orElse(null);
     }
 
@@ -63,7 +84,6 @@ public class GestionnaireService {
         Optional<Candidature> optionalCandidature = candidatureRepository.findById(candidatureId);
         if (optionalCandidature.isPresent()) {
             Candidature candidature = optionalCandidature.get();
-            // Convertir le statut string en enum si nécessaire
             try {
                 Candidature.Etat etat = Candidature.Etat.valueOf(nouveauStatut);
                 candidature.setEtat(etat);
@@ -93,7 +113,9 @@ public class GestionnaireService {
                 .diplomePrincipal(candidature.getCandidat().getDiplomePrincipal())
                 .specialiteDiplome(candidature.getCandidat().getSpecialiteDiplome())
                 .etablissement(candidature.getCandidat().getEtablissement())
-                .anneeObtention(candidature.getCandidat().getAnneeObtention().toString())
+                .anneeObtention(candidature.getCandidat().getAnneeObtention() != null
+                        ? candidature.getCandidat().getAnneeObtention().toString()
+                        : null)
                 .concoursId(candidature.getConcours().getId())
                 .concoursNom(candidature.getConcours().getNom())
                 .specialiteId(candidature.getSpecialite().getId())
@@ -104,8 +126,7 @@ public class GestionnaireService {
                 .cvFichier(candidature.getCvFichier() != null)
                 .cvType(candidature.getCvType())
                 .cvTailleOctets(candidature.getCvTailleOctets())
-                // Aliases pour compatibilité frontend
-                .numeroUnique("CAND-" + candidature.getId())
+                .numeroUnique(candidature.getCandidat().getNumeroUnique())
                 .statut(candidature.getEtat().name())
                 .dateCreation(candidature.getDateSoumission())
                 .build();

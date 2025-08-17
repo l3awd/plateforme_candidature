@@ -59,6 +59,10 @@ const CandidaturePage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [cvFile, setCvFile] = useState(null);
+  const [candidatureId, setCandidatureId] = useState(null);
+  const [docsState, setDocsState] = useState({ cin:null, cv:null, diplome:null });
+  const [docsUploaded, setDocsUploaded] = useState(false);
+  const [preUploadStatus, setPreUploadStatus] = useState({ cin:false, cv:false, diplome:false });
   
   // Récupérer les données de navigation (depuis PostesPage)
   const preSelectedConcours = location.state?.concoursId;
@@ -193,11 +197,29 @@ const CandidaturePage = () => {
     },
   });
 
-  const handleSubmitCandidature = async (values) => {
-    setLoading(true);
-    setError('');
-    
+  const preUpload = async (type, file) => {
+    if (!file) return;
     try {
+      const form = new FormData();
+      form.append('cin', formik.values.cin);
+      form.append('typeDocument', type);
+      form.append('file', file);
+      const res = await axios.post('http://localhost:8080/api/documents/pre-upload', form, { headers: { 'Content-Type':'multipart/form-data'} });
+      if (res.data.success) setPreUploadStatus(s => ({ ...s, [type.toLowerCase()]: true }));
+    } catch (e) { setError(e.response?.data?.message || 'Erreur pré-upload ' + type); }
+  };
+
+  // Hook auto pré-upload CIN quand choisi
+  useEffect(()=>{ if(docsState.cin && formik.values.cin && !preUploadStatus.cin){ preUpload('CIN', docsState.cin);} },[docsState.cin, formik.values.cin]);
+  // Hook auto pré-upload CV à l'étape 1
+  useEffect(()=>{ if(activeStep===1 && docsState.cv && formik.values.cin && !preUploadStatus.cv){ preUpload('CV', docsState.cv);} },[docsState.cv, activeStep, formik.values.cin]);
+  // Diplôme sera pré-upload au clic Soumettre final juste avant soumission si pas déjà fait
+  const handleSubmitCandidature = async (values) => {
+    setLoading(true); setError('');
+    try {
+      if (docsState.diplome && !preUploadStatus.diplome) {
+        await preUpload('Diplome', docsState.diplome);
+      }
       const response = await axios.post('http://localhost:8080/api/candidatures/soumettre', {
         candidat: {
           nom: values.nom,
@@ -224,19 +246,32 @@ const CandidaturePage = () => {
       });
 
       setSuccess(`Candidature soumise avec succès ! Votre numéro unique est : ${response.data.numeroUnique}`);
-      
-      // Redirection après 3 secondes
-      setTimeout(() => {
-        navigate('/suivi', { 
-          state: { numeroUnique: response.data.numeroUnique }
-        });
-      }, 3000);
-      
+      setCandidatureId(response.data.candidatureId);
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur lors de la soumission');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDocsSelect = (type, file) => {
+    setDocsState(prev => ({ ...prev, [type]: file }));
+  };
+
+  const handleUploadDocuments = async () => {
+    if (!candidatureId) return;
+    if (!docsState.cin || !docsState.cv || !docsState.diplome) { setError('CIN, CV et Diplôme sont obligatoires'); return; }
+    const formData = new FormData();
+    formData.append('candidatureId', candidatureId);
+    formData.append('cin', docsState.cin);
+    formData.append('cv', docsState.cv);
+    formData.append('diplome', docsState.diplome);
+    try {
+      const res = await axios.post('http://localhost:8080/api/documents/upload-multiples', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if (res.data.documentsComplets) { setDocsUploaded(true); setSuccess('Documents obligatoires uploadés.');
+        setTimeout(()=>navigate('/suivi',{ state:{ numeroUnique: res.data.numeroUnique || ''}}),2000);
+      } else { setError('Documents manquants: ' + (res.data.documentsManquants||[]).join(', ')); }
+    } catch (e) { setError(e.response?.data?.message || 'Erreur upload documents'); }
   };
 
   const handleNext = () => {
@@ -245,6 +280,12 @@ const CandidaturePage = () => {
 
   const handleBack = () => {
     setActiveStep(activeStep - 1);
+  };
+
+  const stepBlocked = () => {
+    if (activeStep===0) return !preUploadStatus.cin; // CIN requis avant étape 1
+    if (activeStep===1) return !preUploadStatus.cv;  // CV requis avant étape 2
+    return false;
   };
 
   const renderStepContent = (step) => {
@@ -395,6 +436,20 @@ const CandidaturePage = () => {
                 placeholder="06XXXXXXXX ou 07XXXXXXXX"
               />
             </Grid>
+
+            <Grid item xs={12}>
+              <Box sx={{ mt:3, p:2, border:'1px dashed', borderColor: preUploadStatus.cin?'success.main':'warning.main', borderRadius:2}}>
+                <Typography variant="subtitle2" gutterBottom>Upload CIN (obligatoire avant étape suivante)</Typography>
+                <input type="file" accept="application/pdf,image/*" id="cin-file" style={{display:'none'}} onChange={(e)=>{ const f=e.target.files[0]; handleDocsSelect('cin',f); }} />
+                <label htmlFor="cin-file">
+                  <Button component="span" variant="outlined" size="small" startIcon={<UploadIcon/>}>Sélectionner CIN</Button>
+                </label>
+                {docsState.cin && <Button size="small" sx={{ml:2}} onClick={()=>preUpload('CIN', docsState.cin)} disabled={preUploadStatus.cin}>Envoyer</Button>}
+                <Typography variant="caption" display="block" color={preUploadStatus.cin?'success.main':'text.secondary'} sx={{mt:1}}>
+                  {preUploadStatus.cin?`CIN pré-uploadé (${docsState.cin?.name})`:'Aucun fichier CIN envoyé encore.'}
+                </Typography>
+              </Box>
+            </Grid>
           </Grid>
         );
 
@@ -415,7 +470,6 @@ const CandidaturePage = () => {
                 <MenuItem value="Bac+2">Bac+2 (DUT/BTS)</MenuItem>
                 <MenuItem value="Bac+3">Bac+3 (Licence/LP)</MenuItem>
                 <MenuItem value="Bac+5">Bac+5 (Master/Ingénieur)</MenuItem>
-                <MenuItem value="Bac+8">Bac+8 (Doctorat)</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={12} md={6}>
@@ -522,6 +576,20 @@ const CandidaturePage = () => {
                 </Typography>
               </Box>
             </Grid>
+
+            <Grid item xs={12}>
+              <Box sx={{ mt:3, p:2, border:'1px dashed', borderColor: preUploadStatus.cv?'success.main':'warning.main', borderRadius:2}}>
+                <Typography variant="subtitle2" gutterBottom>Upload CV (obligatoire avant étape suivante)</Typography>
+                <input type="file" accept="application/pdf,image/*,.doc,.docx" id="cv-file-new" style={{display:'none'}} onChange={(e)=>{ const f=e.target.files[0]; handleDocsSelect('cv',f); }} />
+                <label htmlFor="cv-file-new">
+                  <Button component="span" variant="outlined" size="small" startIcon={<UploadIcon/>}>Sélectionner CV</Button>
+                </label>
+                {docsState.cv && <Button size="small" sx={{ml:2}} onClick={()=>preUpload('CV', docsState.cv)} disabled={preUploadStatus.cv}>Envoyer</Button>}
+                <Typography variant="caption" display="block" color={preUploadStatus.cv?'success.main':'text.secondary'} sx={{mt:1}}>
+                  {preUploadStatus.cv?`CV pré-uploadé (${docsState.cv?.name})`:'Aucun fichier CV envoyé encore.'}
+                </Typography>
+              </Box>
+            </Grid>
           </Grid>
         );
 
@@ -585,8 +653,8 @@ const CandidaturePage = () => {
                 helperText={formik.touched.centreId && formik.errors.centreId}
               >
                 {centres.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.nom} - {c.ville}
+                  <MenuItem key={c.id} value={c.id} disabled={c.accessible === false}>
+                    {c.nom} - {c.ville} {c.accessible === false && '(Inaccessible)'}
                   </MenuItem>
                 ))}
               </TextField>
@@ -717,7 +785,7 @@ const CandidaturePage = () => {
               <Button
                 onClick={handleNext}
                 variant="contained"
-                disabled={loading}
+                disabled={loading || stepBlocked()}
                 startIcon={loading ? <CircularProgress size={20} /> : (activeStep === steps.length - 1 ? <SendIcon /> : null)}
               >
                 {activeStep === steps.length - 1 ? 'Soumettre' : 'Suivant'}

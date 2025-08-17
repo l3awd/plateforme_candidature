@@ -75,91 +75,107 @@
 - **Suppression des accents** : Tous les textes de concours sans accents pour un meilleur affichage
 - **Compatibilité étendue** : Amélioration de l'affichage sur tous les navigateurs et systèmes
 
-## Scripts utilitaires
+### 📊 Nouvelles fonctionnalités (batch août 2025)
 
-### Application des modifications
+- **Pré-upload documents** : Ajout de la possibilité de pré-upload des documents (CIN, CV, Diplôme) avant la création de la candidature via un champ temporaire `cin_temp`
+- **Champ `candidature_id` nullable** : Dans la table `Document`, le champ `candidature_id` est rendu nullable pour permettre le pré-upload
+- **Quotas centre/spécialité** : Suivi des `places_occupees` et calcul du numéro de place pour les quotas par centre et spécialité
+- **Statistiques multi-axes** : Nouvel endpoint `/api/candidatures/statistiques/multi` pour des statistiques détaillées sur 14 jours, occupation des quotas, et complétude des documents
+- **Statistiques avancées** : Endpoint `/api/candidatures/statistiques/avancees` pour des statistiques par gestionnaire, spécialité, et ville centre
+- **UI candidature améliorée** : Les étapes sont bloquées tant que le CIN (étape 0) et le CV (étape 1) ne sont pas pré-uploadés; le diplôme est requis avant la soumission finale
+- **Centres inaccessibles désactivés** : Les centres d'examen inaccessibles sont affichés en désactivés
+- **Notifications email désactivées** : Le système de notifications par email est désactivé (stub seulement)
 
-```bash
-# Application automatique de toutes les modifications
-apply_modifications.bat
+## Endpoints principaux ajoutés
 
-# Test de la configuration
-test_modifications.bat
+- **Pré-upload documents** : `POST /api/documents/pre-upload` (multipart) pour le CIN, le type de document (CIN|CV|Diplome), et le fichier
+- **Statistiques multi-axes** : `GET /api/candidatures/statistiques/multi?concoursId=`
+- **CRUD quotas** : `/api/concours/{concoursId}/centre-specialite` pour la gestion des quotas
 
-# Mise à jour manuelle de la base de données
-mysql -u root -p candidature_plus < update_modifications.sql
-```
+## Mapping Exigences -> Implémentations (Août 2025)
 
-### Candidats de test pour le suivi
+| Exigence                                           | Implémentation                                                                      | Endpoints / Fichiers clés                                                                                             |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Pré‑upload documents (CIN, CV, Diplôme)            | Champ `cin_temp`, `candidature_id` nullable, rattachement post création             | `DocumentUploadController.preUpload`, `DocumentService.rattacherPreUploadedDocuments`, scripts DB `init_database.sql` |
+| Soumission candidature + retour ID & numéro unique | Génération `numeroUnique`, retour `candidatureId`                                   | `CandidatureController.soumettreCandidate`                                                                            |
+| Validation / Rejet avec quotas                     | Réservation place (décrément) + numéro place + rejet avec motif                     | `CandidatureService.validerCandidature`, `rejeterCandidature`, table `centre_specialite` champs quotas                |
+| Quotas par centre/spécialité                       | Entité relation `CentreSpecialite` avec `placesOccupees`, `nombrePlacesDisponibles` | Requêtes dans `CandidatureService` / `ConcoursAssociationController`                                                  |
+| Statistiques multi-axes                            | Timeline 14j, occupation quotas, complétude docs                                    | `GET /api/candidatures/statistiques/multi`                                                                            |
+| Statistiques avancées                              | Par gestionnaire, spécialité, ville (scopées)                                       | `GET /api/candidatures/statistiques/avancees`                                                                         |
+| KPIs synthèse & timeline 30j                       | Taux validation, % docs complets, occupation, timeline                              | `GET /api/candidatures/kpi/synthese`, `GET /api/candidatures/kpi/timeline30j`                                         |
+| Accès restreint gestionnaire local                 | Filtrage backend centre unique                                                      | Méthodes `ensureCentreAccess`, variantes `...ForUser` dans `CandidatureService`                                       |
+| Réponses API unifiées                              | Wrapper `ApiResponse<T>`                                                            | Tous contrôleurs unifiés (candidatures, auth, centres, concours, etc.)                                                |
+| Export candidatures CSV                            | Génération dynamique filtrée                                                        | `GET /api/candidatures/export/csv`                                                                                    |
+| Export quotas occupation CSV (optionnel)           | Occupation quotas concours/centre/spécialité                                        | `GET /api/candidatures/export/quotas-csv`                                                                             |
+| État "Confirmee" après validation                  | Nouveau statut + endpoint confirmation                                              | Enum `Candidature.Etat`, `POST /api/candidatures/{id}/confirmer`                                                      |
+| Centres grisées côté gestionnaire local            | Flag `accessible`                                                                   | `CentreController.getAllCentres`                                                                                      |
+| Désactivation emails (stub)                        | Service notifications simplifié                                                     | `NotificationService` (stubs)                                                                                         |
+| Scripts DB nettoyés & archivés                     | Scripts actifs / archive legacy datée                                               | Dossier `archive_scripts/legacy_20250809`                                                                             |
+| Trace des actions gestionnaires                    | Logging actions (validation, rejet, confirmation)                                   | `LogActionService.logAction`                                                                                          |
 
-- **CAND-2025-000001** : Benali Youssef (candidature acceptée)
-- **CAND-2025-000002** : Zahra Khadija (candidature rejetée)
-- **CAND-2025-000003** : Idrissi Omar (en cours de validation)
-- **CAND-2025-000004** : Rhazi Sanaa (soumise)
-- **CAND-2025-000005** : Mansouri Rachid (confirmée)
+## Nouveaux Endpoints (ajouts récents)
 
-### Concours disponibles
+| Endpoint                              | Méthode | Description                                        |
+| ------------------------------------- | ------- | -------------------------------------------------- |
+| `/api/candidatures/{id}/confirmer`    | POST    | Confirme une candidature validée (état Confirmee)  |
+| `/api/candidatures/export/quotas-csv` | GET     | Export CSV occupation quotas (gestionnaire global) |
 
-1. **Concours Attaché d'Administration - 2025**
+## États de la candidature
 
-   - Ouvert du 15/01/2025 au 15/03/2025
-   - Examen le 20/04/2025
-   - Spécialités : Économie, Comptabilité, Droit Public
+`Soumise` -> `En_Cours_Validation` -> `Validee` -> `Confirmee` (nouveau) ou `Rejetee`.
 
-2. **Concours Inspecteur des Finances - 2025**
+La confirmation verrouille la place attribuée (aucun changement de quotas, statut final pour intégration externe).
 
-   - Ouvert du 01/02/2025 au 01/04/2025
-   - Examen le 10/05/2025
-   - Spécialités : Comptabilité, Statistiques
+## Guide Scripts (Final)
 
-3. **Concours Technicien Spécialisé en Informatique - 2025**
-   - Ouvert du 20/01/2025 au 20/03/2025
-   - Examen le 25/04/2025
-   - Spécialité : Informatique de Gestion
+| Usage                                | Script                              | Notes                                |
+| ------------------------------------ | ----------------------------------- | ------------------------------------ |
+| Initialisation complète              | `init_database.sql`                 | Crée schéma + données de base        |
+| Données de test                      | `insert_test_data.sql`              | Insère candidats / concours exemples |
+| Mise à jour schéma incrémentale      | `update_db.sql`                     | Appliquer après pull code            |
+| Lancement application                | `start_app.bat`                     | Démarre backend & (option) frontend  |
+| Arrêt application                    | `stop_app.bat`                      | Stop services locaux                 |
+| Appliquer changements code (rebuild) | `apply_changes.bat`                 | Clean & rebuild backend              |
+| Diagnostic application               | `diagnostic_app.ps1`                | Vérifie services / ports             |
+| Export / tests divers (legacy)       | `archive_scripts/legacy_20250809/*` | Référence historique                 |
 
-### Centres d'examen
+## Notes de Sécurité
 
-- Casablanca, Rabat, Fès, Marrakech, Agadir
+- Accès gestionnaire local strict au centre attribué.
+- Statistiques & exports filtrés selon rôle.
+- Mots de passe stockés en clair (demande spécifique) – à chiffrer en production.
 
-### Gestionnaires de test
+## Prochaines Améliorations Potentielles
 
-- **h.alami@mf.gov.ma** : Gestionnaire Local (Casablanca)
-- **f.bennani@mf.gov.ma** : Gestionnaire Local (Rabat)
-- **m.chraibi@mf.gov.ma** : Gestionnaire Global
-- **a.talbi@mf.gov.ma** : Administrateur
+- Moyenne temps de traitement (soumission -> validation -> confirmation).
+- Filtrage export quotas par centre/specialite.
+- Tests automatisés (JUnit) pour transitions d'états.
 
-## URLs de l'application
+# Plateforme Candidature Plus
 
-| Service             | URL                   | Description                 |
-| ------------------- | --------------------- | --------------------------- |
-| **Frontend**        | http://localhost:3000 | Interface utilisateur React |
-| **Backend API**     | http://localhost:8080 | API REST Spring Boot        |
-| **Base de données** | localhost:3306        | MySQL Server                |
+## Structure Scripts (Nettoyée 2025-08-09)
 
-## Technologies utilisées
+Première installation:
 
-### Front-end : React
+- init_database.sql
+- insert_test_data.sql
+- start_app.bat
 
-- React : Interface utilisateur dynamique
-- React Router : Gestion de la navigation
-- Material-UI : Composants design moderne
-- Formik + Yup : Gestion des formulaires et validation
-- Axios : Consommation des API REST
+Utilisation quotidienne:
 
-### Back-end : Spring Boot
+- start_app.bat
+- stop_app.bat
 
-- Spring Boot : Framework robuste
-- Spring Data JPA : Persistance et ORM
-- Spring Security : Authentification et autorisation
-- Spring Web : Services REST
-- Lombok : Réduction du code boilerplate
-- MySQL : Base de données relationnelle
+Après modifications du code:
 
-## Architecture
+- apply_changes.bat
 
-L'application suit une architecture moderne avec :
+Après modifications de la base:
 
-- **Frontend React** : Interface utilisateur responsive
-- **Backend Spring Boot** : API REST sécurisée
-- **Base de données MySQL** : Stockage persistant
-- **Architecture en couches** : Contrôleurs, Services, Repositories, Entités
+- update_db.sql (puis apply_changes.bat si recompilation nécessaire)
+
+Diagnostic:
+
+- diagnostic_app.ps1
+
+Archive des anciens scripts: dossier `archive_scripts/legacy_20250809`

@@ -61,4 +61,10 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Intege
                         @Param("specialiteId") Long specialiteId,
                         @Param("centreId") Long centreId,
                         @Param("statut") String statut);
+
+        @Query("SELECT c.gestionnaire.id, COUNT(c) FROM Candidature c WHERE c.gestionnaire IS NOT NULL GROUP BY c.gestionnaire.id")
+        List<Object[]> countByGestionnaire();
+
+        @Query("SELECT c.gestionnaire.id, c.etat, COUNT(c) FROM Candidature c WHERE c.gestionnaire IS NOT NULL GROUP BY c.gestionnaire.id, c.etat")
+        List<Object[]> countByGestionnaireAndEtat();
 }

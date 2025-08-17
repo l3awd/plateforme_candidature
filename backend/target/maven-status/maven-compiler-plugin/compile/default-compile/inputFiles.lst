@@ -18,6 +18,7 @@ c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\examp
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\controller\TestController.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\controller\UtilisateurController.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\controller\WebController.java
+c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\dto\ApiResponse.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\dto\CandidatDto.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\dto\CandidatureDetailDto.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\dto\CandidatureRequest.java
@@ -46,6 +47,7 @@ c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\examp
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\entity\Specialite.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\entity\Statistique.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\entity\Utilisateur.java
+c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\entity\UtilisateurCentre.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\CandidatRepository.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\CandidatureRepository.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\CentreRepository.java
@@ -57,6 +59,7 @@ c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\examp
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\LogActionRepository.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\NotificationRepository.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\SpecialiteRepository.java
+c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\UtilisateurCentreRepository.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\repository\UtilisateurRepository.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\AuthenticationService.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\CandidatureEnhancedService.java
@@ -66,4 +69,7 @@ c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\examp
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\GestionnaireService.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\LogActionService.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\NotificationService.java
+c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\ParametreService.java
+c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\PermissionService.java
 c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\StatistiquesService.java
+c:\Users\ab\Desktop\stage\plateforme_candidature\backend\src\main\java\com\example\candidatureplus\service\UtilisateurCentreService.java

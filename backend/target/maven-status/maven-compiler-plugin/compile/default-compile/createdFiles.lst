@@ -7,6 +7,7 @@ com\example\candidatureplus\dto\StatistiquesDto$StatistiquesDtoBuilder.class
 com\example\candidatureplus\entity\Utilisateur.class
 com\example\candidatureplus\entity\ConcoursCentre.class
 com\example\candidatureplus\service\CandidatureEnhancedService.class
+com\example\candidatureplus\entity\UtilisateurCentre$UtilisateurCentreBuilder.class
 com\example\candidatureplus\controller\MainController.class
 com\example\candidatureplus\repository\ConcoursCentreRepository.class
 com\example\candidatureplus\controller\TestController.class
@@ -23,6 +24,7 @@ com\example\candidatureplus\entity\Utilisateur$Role.class
 com\example\candidatureplus\service\EmailService.class
 com\example\candidatureplus\dto\ConcoursDto$ConcoursDtoBuilder.class
 com\example\candidatureplus\entity\Notification.class
+com\example\candidatureplus\entity\UtilisateurCentre.class
 com\example\candidatureplus\service\GestionnaireService.class
 com\example\candidatureplus\dto\CandidatureDetailDto.class
 com\example\candidatureplus\entity\Concours.class
@@ -45,7 +47,9 @@ com\example\candidatureplus\dto\ValidationResponse.class
 com\example\candidatureplus\repository\CandidatRepository.class
 com\example\candidatureplus\entity\Statistique.class
 com\example\candidatureplus\dto\CentreDto$CentreDtoBuilder.class
+com\example\candidatureplus\service\UtilisateurCentreService.class
 com\example\candidatureplus\repository\CentreSpecialiteRepository.class
+com\example\candidatureplus\config\SecurityConfig$1.class
 com\example\candidatureplus\dto\LoginRequest.class
 com\example\candidatureplus\entity\Candidat.class
 com\example\candidatureplus\entity\LogAction$TypeActeur.class
@@ -62,17 +66,22 @@ com\example\candidatureplus\entity\Notification$TypeDestinataire.class
 com\example\candidatureplus\repository\UtilisateurRepository.class
 com\example\candidatureplus\dto\CandidatureRequest.class
 com\example\candidatureplus\controller\DiagnosticController.class
+com\example\candidatureplus\dto\ApiResponse.class
 com\example\candidatureplus\repository\CandidatureRepository.class
 com\example\candidatureplus\repository\LogActionRepository.class
 com\example\candidatureplus\controller\ConcoursController.class
+com\example\candidatureplus\CandidaturePlusApplication.class
 com\example\candidatureplus\entity\Document$TypeDocument.class
 com\example\candidatureplus\entity\Candidature$Etat.class
+com\example\candidatureplus\repository\UtilisateurCentreRepository.class
 com\example\candidatureplus\repository\DocumentRepository.class
+com\example\candidatureplus\service\ParametreService.class
 com\example\candidatureplus\controller\LogActionController.class
 com\example\candidatureplus\repository\CentreRepository.class
 com\example\candidatureplus\dto\StatistiquesDto.class
 com\example\candidatureplus\service\StatistiquesService.class
 com\example\candidatureplus\dto\CentreDto.class
+com\example\candidatureplus\service\PermissionService.class
 com\example\candidatureplus\entity\Candidature.class
 com\example\candidatureplus\controller\WebController.class
 com\example\candidatureplus\entity\ConcourSpecialite.class
@@ -89,4 +98,5 @@ com\example\candidatureplus\dto\StatistiquesDto$SpecialiteCount.class
 com\example\candidatureplus\service\DocumentService.class
 com\example\candidatureplus\dto\CandidatureDetailDto$CandidatureDetailDtoBuilder.class
 com\example\candidatureplus\dto\CandidatDto.class
+com\example\candidatureplus\config\SecurityConfig.class
 com\example\candidatureplus\repository\ConcoursRepository.class

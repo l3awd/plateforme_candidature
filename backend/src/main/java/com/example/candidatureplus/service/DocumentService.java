@@ -11,7 +11,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -47,8 +50,12 @@ public class DocumentService {
 
         // Créer l'enregistrement en base
         Document document = new Document();
-        document.setCandidature(new com.example.candidatureplus.entity.Candidature());
-        document.getCandidature().setId(candidatureId);
+        if (candidatureId != null) { // éviter de créer une entité Candidature fantôme lors du pré-upload
+            document.setCandidature(new com.example.candidatureplus.entity.Candidature());
+            document.getCandidature().setId(candidatureId);
+        } else {
+            document.setCandidature(null);
+        }
         document.setTypeDocument(typeDocument);
         document.setNomFichier(originalFilename);
         document.setCheminFichier(filePath.toString());
@@ -72,10 +79,8 @@ public class DocumentService {
                 .anyMatch(d -> d.getTypeDocument() == Document.TypeDocument.CV);
         boolean hasDiplome = documents.stream()
                 .anyMatch(d -> d.getTypeDocument() == Document.TypeDocument.Diplome);
-        boolean hasPhoto = documents.stream()
-                .anyMatch(d -> d.getTypeDocument() == Document.TypeDocument.Photo);
-
-        return hasCIN && hasCV && hasDiplome && hasPhoto;
+        // Photo devient optionnelle -> ne plus l'exiger
+        return hasCIN && hasCV && hasDiplome;
     }
 
     /**
@@ -130,5 +135,86 @@ public class DocumentService {
 
         // Supprimer l'enregistrement en base
         documentRepository.delete(document);
+    }
+
+    /**
+     * Upload multiple standard documents in one request (CIN, CV, Diplome,
+     * Releve_Notes, Photo)
+     */
+    public Map<String, Object> sauvegarderDocumentsMultiples(Integer candidatureId,
+            MultipartFile cin,
+            MultipartFile cv,
+            MultipartFile diplome,
+            MultipartFile releveNotes,
+            MultipartFile photo) throws IOException {
+        Map<String, Object> result = new HashMap<>();
+        List<String> sauvegardes = new ArrayList<>();
+        if (cin != null && !cin.isEmpty()) {
+            sauvegarderDocument(cin, candidatureId, Document.TypeDocument.CIN);
+            sauvegardes.add("CIN");
+        }
+        if (cv != null && !cv.isEmpty()) {
+            sauvegarderDocument(cv, candidatureId, Document.TypeDocument.CV);
+            sauvegardes.add("CV");
+        }
+        if (diplome != null && !diplome.isEmpty()) {
+            sauvegarderDocument(diplome, candidatureId, Document.TypeDocument.Diplome);
+            sauvegardes.add("Diplome");
+        }
+        if (releveNotes != null && !releveNotes.isEmpty()) {
+            sauvegarderDocument(releveNotes, candidatureId, Document.TypeDocument.Releve_Notes);
+            sauvegardes.add("Releve_Notes");
+        }
+        if (photo != null && !photo.isEmpty()) {
+            sauvegarderDocument(photo, candidatureId, Document.TypeDocument.Photo);
+            sauvegardes.add("Photo");
+        }
+        boolean complets = verifierDocumentsComplets(candidatureId);
+        result.put("success", true);
+        result.put("documentsSauvegardes", sauvegardes);
+        result.put("documentsComplets", complets);
+        if (!complets) {
+            result.put("documentsManquants", getDocumentsManquants(candidatureId));
+        }
+        return result;
+    }
+
+    /**
+     * Liste les documents manquants pour les obligatoires.
+     */
+    public List<String> getDocumentsManquants(Integer candidatureId) {
+        List<Document> documents = documentRepository.findByCandidature_Id(candidatureId);
+        List<String> manquants = new ArrayList<>();
+        if (documents.stream().noneMatch(d -> d.getTypeDocument() == Document.TypeDocument.CIN))
+            manquants.add("CIN");
+        if (documents.stream().noneMatch(d -> d.getTypeDocument() == Document.TypeDocument.CV))
+            manquants.add("CV");
+        if (documents.stream().noneMatch(d -> d.getTypeDocument() == Document.TypeDocument.Diplome))
+            manquants.add("Diplome");
+        return manquants;
+    }
+
+    public Document preUploadDocument(MultipartFile file, String cinTemp, Document.TypeDocument type)
+            throws IOException {
+        Document doc = sauvegarderDocument(file, null, type);
+        doc.setCinTemp(cinTemp);
+        doc.setCandidature(null);
+        return documentRepository.save(doc);
+    }
+
+    public int rattacherPreUploadedDocuments(String cinTemp, Integer candidatureId) {
+        List<Document> temporaires = documentRepository.findByCinTemp(cinTemp);
+        int count = 0;
+        for (Document d : temporaires) {
+            if (d.getCandidature() == null) {
+                com.example.candidatureplus.entity.Candidature c = new com.example.candidatureplus.entity.Candidature();
+                c.setId(candidatureId);
+                d.setCandidature(c);
+                d.setCinTemp(null);
+                documentRepository.save(d);
+                count++;
+            }
+        }
+        return count;
     }
 }

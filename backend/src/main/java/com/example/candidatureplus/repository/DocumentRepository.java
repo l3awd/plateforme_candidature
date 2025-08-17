@@ -13,4 +13,8 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findByTypeDocument(Document.TypeDocument typeDocument);
 
     boolean existsByCandidature_IdAndTypeDocument(Integer candidatureId, Document.TypeDocument typeDocument);
+
+    List<Document> findByCinTemp(String cinTemp);
+
+    void deleteByCinTemp(String cinTemp);
 }

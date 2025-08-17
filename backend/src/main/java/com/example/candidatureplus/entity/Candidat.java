@@ -31,7 +31,7 @@ public class Candidat {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Genre genre;
+    private Genre genre; // Valeurs attendues maintenant: Masculin / Feminin
 
     @Column(nullable = false, unique = true, length = 20)
     private String cin;
@@ -89,6 +89,6 @@ public class Candidat {
     private List<Candidature> candidatures;
 
     public enum Genre {
-        Monsieur, Madame
+        Masculin, Feminin
     }
 }

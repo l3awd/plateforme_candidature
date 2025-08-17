@@ -23,7 +23,10 @@ import {
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
   School as SchoolIcon,
-  Work as WorkIcon
+  Work as WorkIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
+  HourglassBottom as HourglassIcon
 } from '@mui/icons-material';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
@@ -36,6 +39,9 @@ const GestionCandidaturesComplete = () => {
   const [selectedCandidature, setSelectedCandidature] = useState(null);
   const [openDetails, setOpenDetails] = useState(false);
   const [openStats, setOpenStats] = useState(false);
+  const [rejetDialogOpen, setRejetDialogOpen] = useState(false);
+  const [rejetMotif, setRejetMotif] = useState("");
+  const [candidatureAction, setCandidatureAction] = useState(null); // candidature ciblée pour action
   
   // Filtres
   const [filters, setFilters] = useState({
@@ -66,10 +72,31 @@ const GestionCandidaturesComplete = () => {
     applyFilters();
   }, [candidatures, filters]);
 
+  // Définition des statuts (backend enums)
+  const STATUTS = [
+    { value: 'Soumise', label: 'Soumise (En attente)' },
+    { value: 'En_Cours_Validation', label: 'En cours de validation' },
+    { value: 'Validee', label: 'Validée' },
+    { value: 'Rejetee', label: 'Rejetée' },
+    { value: 'Confirmee', label: 'Confirmée' }
+  ];
+
+  // Helper pour extraire une liste d'un ApiResponse éventuel
+  const unwrapList = (res) => {
+    const d = res?.data;
+    if (Array.isArray(d)) return d;
+    if (Array.isArray(d?.data)) return d.data; // format {success, data:[...]}
+    return [];
+  };
+  const unwrapObject = (res) => {
+    const d = res?.data;
+    if (d && d.data && typeof d.data === 'object' && !Array.isArray(d.data)) return d.data;
+    return d || {};
+  };
+
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      
       const [candidaturesRes, concoursRes, specialitesRes, centresRes, statsRes] = await Promise.all([
         axios.get('http://localhost:8080/api/gestionnaire/candidatures'),
         axios.get('http://localhost:8080/api/concours'),
@@ -77,15 +104,14 @@ const GestionCandidaturesComplete = () => {
         axios.get('http://localhost:8080/api/centres'),
         axios.get('http://localhost:8080/api/gestionnaire/statistiques')
       ]);
-      
-      setCandidatures(candidaturesRes.data || []);
-      setConcours(concoursRes.data || []);
-      setSpecialites(specialitesRes.data || []);
-      setCentres(centresRes.data || []);
-      setStatistics(statsRes.data || {});
-      
+      setCandidatures(unwrapList(candidaturesRes));
+      setConcours(unwrapList(concoursRes));
+      setSpecialites(unwrapList(specialitesRes));
+      setCentres(unwrapList(centresRes));
+      setStatistics(unwrapObject(statsRes));
     } catch (err) {
       console.error('Erreur chargement:', err);
+      setConcours([]); setSpecialites([]); setCentres([]);
     } finally {
       setLoading(false);
     }
@@ -142,7 +168,8 @@ const GestionCandidaturesComplete = () => {
   const viewCandidatureDetails = async (candidature) => {
     try {
       const response = await axios.get(`http://localhost:8080/api/gestionnaire/candidatures/${candidature.id}`);
-      setSelectedCandidature(response.data);
+      const data = unwrapObject(response); // utiliser helper
+      setSelectedCandidature(data);
       setOpenDetails(true);
     } catch (err) {
       console.error('Erreur détails:', err);
@@ -171,20 +198,22 @@ const GestionCandidaturesComplete = () => {
 
   const getStatutColor = (statut) => {
     switch (statut) {
-      case 'EN_ATTENTE': return 'warning';
-      case 'ACCEPTEE': return 'success';
-      case 'REFUSEE': return 'error';
-      case 'EN_COURS': return 'info';
+      case 'Soumise': return 'warning';
+      case 'En_Cours_Validation': return 'info';
+      case 'Validee': return 'success';
+      case 'Confirmee': return 'success';
+      case 'Rejetee': return 'error';
       default: return 'default';
     }
   };
 
   const getStatutLabel = (statut) => {
     switch (statut) {
-      case 'EN_ATTENTE': return 'En attente';
-      case 'ACCEPTEE': return 'Acceptée';
-      case 'REFUSEE': return 'Refusée';
-      case 'EN_COURS': return 'En cours';
+      case 'Soumise': return 'Soumise';
+      case 'En_Cours_Validation': return 'En cours';
+      case 'Validee': return 'Validée';
+      case 'Confirmee': return 'Confirmée';
+      case 'Rejetee': return 'Rejetée';
       default: return statut;
     }
   };
@@ -503,6 +532,19 @@ const GestionCandidaturesComplete = () => {
     </Dialog>
   );
 
+  const handleAction = async (candidature, action, motif) => {
+    try {
+      await axios.put(`http://localhost:8080/api/gestionnaire/candidatures/${candidature.id}/action`, { action, motif });
+      await loadInitialData();
+    } catch (e) {
+      console.error('Action erreur', e);
+    } finally {
+      setRejetDialogOpen(false);
+      setRejetMotif("");
+      setCandidatureAction(null);
+    }
+  };
+
   const paginatedCandidatures = filteredCandidatures.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -622,10 +664,7 @@ const GestionCandidaturesComplete = () => {
                 onChange={(e) => handleFilterChange('statut', e.target.value)}
               >
                 <MenuItem value="">Tous</MenuItem>
-                <MenuItem value="EN_ATTENTE">En attente</MenuItem>
-                <MenuItem value="ACCEPTEE">Acceptée</MenuItem>
-                <MenuItem value="REFUSEE">Refusée</MenuItem>
-                <MenuItem value="EN_COURS">En cours</MenuItem>
+                {STATUTS.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>
@@ -722,23 +761,36 @@ const GestionCandidaturesComplete = () => {
                       <TableCell align="center">
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Tooltip title="Voir détails">
-                            <IconButton
-                              size="small"
-                              onClick={() => viewCandidatureDetails(candidature)}
-                            >
+                            <IconButton size="small" onClick={() => viewCandidatureDetails(candidature)}>
                               <ViewIcon />
                             </IconButton>
                           </Tooltip>
-                          
                           <Tooltip title="Télécharger CV">
-                            <IconButton
-                              size="small"
-                              onClick={() => downloadCV(candidature.id)}
-                              disabled={!candidature.cvFichier}
-                            >
+                            <IconButton size="small" onClick={() => downloadCV(candidature.id)} disabled={!candidature.cvFichier}>
                               <DownloadIcon />
                             </IconButton>
                           </Tooltip>
+                          {candidature.statut === 'Soumise' && (
+                            <Tooltip title="Mettre en cours">
+                              <IconButton size="small" color="info" onClick={() => handleAction(candidature,'en_cours')}>
+                                <HourglassIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {(candidature.statut === 'Soumise' || candidature.statut === 'En_Cours_Validation') && (
+                            <Tooltip title="Valider">
+                              <IconButton size="small" color="success" onClick={() => handleAction(candidature,'valider')}>
+                                <CheckIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {['Soumise','En_Cours_Validation','Validee'].includes(candidature.statut) && (
+                            <Tooltip title="Rejeter">
+                              <IconButton size="small" color="error" onClick={() => { setCandidatureAction(candidature); setRejetDialogOpen(true); }}>
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -770,6 +822,16 @@ const GestionCandidaturesComplete = () => {
       {/* Dialogs */}
       {renderCandidatureDetails()}
       {renderStatisticsDialog()}
+      <Dialog open={rejetDialogOpen} onClose={() => setRejetDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Motif de rejet</DialogTitle>
+        <DialogContent>
+          <TextField multiline minRows={3} fullWidth value={rejetMotif} onChange={e=>setRejetMotif(e.target.value)} placeholder="Indiquez le motif" />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={()=>setRejetDialogOpen(false)}>Annuler</Button>
+          <Button color="error" disabled={!rejetMotif.trim()} onClick={()=>handleAction(candidatureAction,'rejeter',rejetMotif)}>Rejeter</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Bouton flottant pour les statistiques */}
       <Fab

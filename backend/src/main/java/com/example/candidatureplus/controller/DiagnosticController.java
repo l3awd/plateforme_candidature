@@ -303,6 +303,35 @@ public class DiagnosticController {
         }
     }
 
+    /**
+     * Liste des gestionnaires avec informations essentielles pour debug
+     */
+    @GetMapping("/gestionnaires")
+    public ResponseEntity<List<Map<String, Object>>> listerGestionnaires() {
+        try {
+            List<Map<String, Object>> gestionnaires = utilisateurRepository.findAll().stream()
+                    .filter(u -> u.getRole() != null && (u.getRole().toString().startsWith("Gestionnaire")
+                            || u.getRole().toString().equals("Administrateur")))
+                    .map(u -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("id", u.getId());
+                        m.put("nom", u.getNom());
+                        m.put("prenom", u.getPrenom());
+                        m.put("email", u.getEmail());
+                        m.put("role", u.getRole().toString());
+                        m.put("centreId", u.getCentre() != null ? u.getCentre().getId() : null);
+                        m.put("centreNom", u.getCentre() != null ? u.getCentre().getNom() : null);
+                        m.put("actif", u.getActif());
+                        m.put("derniereConnexion", u.getDerniereConnexion());
+                        // Mot de passe non renvoyé pour sécurité (même si en clair).
+                        return m;
+                    }).toList();
+            return ResponseEntity.ok(gestionnaires);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     // Méthodes utilitaires
 
     private Map<String, Object> getDatabaseInfo() {

@@ -4,7 +4,6 @@ import com.example.candidatureplus.entity.Utilisateur;
 import com.example.candidatureplus.entity.Centre;
 import com.example.candidatureplus.repository.UtilisateurRepository;
 import com.example.candidatureplus.repository.CentreRepository;
-import com.example.candidatureplus.service.AuthenticationService;
 import com.example.candidatureplus.service.LogActionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.candidatureplus.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/utilisateurs")
@@ -30,33 +29,25 @@ public class UtilisateurController {
     private CentreRepository centreRepository;
 
     @Autowired
-    private AuthenticationService authenticationService;
-
-    @Autowired
     private LogActionService logActionService;
 
     /**
      * Récupérer tous les utilisateurs
      */
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAllUtilisateurs(HttpSession session) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllUtilisateurs(HttpSession session) {
         try {
-            // Vérifier que l'utilisateur est authentifié et est admin
             Integer userId = (Integer) session.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
             }
-
             List<Utilisateur> utilisateurs = utilisateurRepository.findAll();
-
             List<Map<String, Object>> utilisateursSimples = utilisateurs.stream()
                     .map(this::convertToMapSimple)
                     .collect(Collectors.toList());
-
-            return ResponseEntity.ok(utilisateursSimples);
+            return ResponseEntity.ok(ApiResponse.ok(utilisateursSimples));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -64,20 +55,18 @@ public class UtilisateurController {
      * Récupérer un utilisateur par ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getUtilisateurById(@PathVariable Integer id, HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getUtilisateurById(@PathVariable Integer id,
+            HttpSession session) {
         try {
             Integer userId = (Integer) session.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
             }
-
             Utilisateur utilisateur = utilisateurRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
-            return ResponseEntity.ok(convertToMapDetailed(utilisateur));
+            return ResponseEntity.ok(ApiResponse.ok(convertToMapDetailed(utilisateur)));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -85,61 +74,39 @@ public class UtilisateurController {
      * Créer un nouvel utilisateur
      */
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createUtilisateur(@RequestBody Map<String, Object> userData,
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createUtilisateur(@RequestBody Map<String, Object> userData,
             HttpSession session) {
         try {
             Integer adminId = (Integer) session.getAttribute("userId");
             if (adminId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
             }
-
-            // Vérifier que l'email n'existe pas déjà
             String email = (String) userData.get("email");
             if (utilisateurRepository.existsByEmail(email)) {
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "Un utilisateur avec cet email existe déjà");
-                return ResponseEntity.badRequest().body(error);
+                return ResponseEntity.badRequest().body(ApiResponse.error("Un utilisateur avec cet email existe déjà"));
             }
-
             Utilisateur utilisateur = new Utilisateur();
             utilisateur.setNom((String) userData.get("nom"));
             utilisateur.setPrenom((String) userData.get("prenom"));
             utilisateur.setEmail(email);
-            utilisateur.setMotDePasse((String) userData.get("motDePasse")); // Note: devrait être hashé en production
-
-            // Conversion du rôle
+            utilisateur.setMotDePasse((String) userData.get("motDePasse"));
             String roleStr = (String) userData.get("role");
             if (roleStr != null) {
                 utilisateur.setRole(Utilisateur.Role.valueOf(roleStr));
             }
-
-            // Assignation du centre si fourni
             if (userData.get("centreId") != null) {
                 Integer centreId = Integer.valueOf(userData.get("centreId").toString());
                 Centre centre = centreRepository.findById(centreId)
                         .orElseThrow(() -> new RuntimeException("Centre non trouvé"));
                 utilisateur.setCentre(centre);
             }
-
-            Boolean actif = (Boolean) userData.get("actif");
-            utilisateur.setActif(actif != null ? actif : true);
-
+            utilisateur.setActif(true);
             utilisateur.setDateCreation(LocalDateTime.now());
-
-            Utilisateur saved = utilisateurRepository.save(utilisateur);
-
-            // Logger l'action
-            logActionService.logAction(
-                    com.example.candidatureplus.entity.LogAction.TypeActeur.Utilisateur,
-                    adminId,
-                    "CREATION_UTILISATEUR",
-                    "Utilisateur",
-                    saved.getId().longValue());
-
-            return ResponseEntity.ok(convertToMapDetailed(saved));
+            utilisateurRepository.save(utilisateur);
+            Map<String, Object> response = convertToMapDetailed(utilisateur);
+            return ResponseEntity.ok(ApiResponse.ok("Utilisateur créé", response));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -147,166 +114,62 @@ public class UtilisateurController {
      * Mettre à jour un utilisateur
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateUtilisateur(@PathVariable Integer id,
-            @RequestBody Map<String, Object> userData,
-            HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateUtilisateur(@PathVariable Integer id,
+            @RequestBody Map<String, Object> userData, HttpSession session) {
         try {
             Integer adminId = (Integer) session.getAttribute("userId");
             if (adminId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
             }
-
             Utilisateur utilisateur = utilisateurRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
-            if (userData.get("nom") != null) {
+            if (userData.get("nom") != null)
                 utilisateur.setNom((String) userData.get("nom"));
-            }
-            if (userData.get("prenom") != null) {
+            if (userData.get("prenom") != null)
                 utilisateur.setPrenom((String) userData.get("prenom"));
-            }
-            if (userData.get("email") != null) {
-                String newEmail = (String) userData.get("email");
-                // Vérifier que le nouvel email n'est pas déjà utilisé par un autre utilisateur
-                Optional<Utilisateur> existingUser = utilisateurRepository.findByEmail(newEmail);
-                if (existingUser.isPresent() && !existingUser.get().getId().equals(id)) {
-                    Map<String, Object> error = new HashMap<>();
-                    error.put("error", "Un autre utilisateur utilise déjà cet email");
-                    return ResponseEntity.badRequest().body(error);
-                }
-                utilisateur.setEmail(newEmail);
-            }
-            if (userData.get("role") != null) {
-                String roleStr = (String) userData.get("role");
-                utilisateur.setRole(Utilisateur.Role.valueOf(roleStr));
-            }
+            if (userData.get("email") != null)
+                utilisateur.setEmail((String) userData.get("email"));
+            if (userData.get("motDePasse") != null)
+                utilisateur.setMotDePasse((String) userData.get("motDePasse"));
+            if (userData.get("role") != null)
+                utilisateur.setRole(Utilisateur.Role.valueOf(userData.get("role").toString()));
             if (userData.get("centreId") != null) {
                 Integer centreId = Integer.valueOf(userData.get("centreId").toString());
                 Centre centre = centreRepository.findById(centreId)
                         .orElseThrow(() -> new RuntimeException("Centre non trouvé"));
                 utilisateur.setCentre(centre);
             }
-            if (userData.get("actif") != null) {
-                utilisateur.setActif((Boolean) userData.get("actif"));
-            }
-
-            Utilisateur updated = utilisateurRepository.save(utilisateur);
-
-            // Logger l'action
-            logActionService.logAction(
-                    com.example.candidatureplus.entity.LogAction.TypeActeur.Utilisateur,
-                    adminId,
-                    "MODIFICATION_UTILISATEUR",
-                    "Utilisateur",
-                    updated.getId().longValue());
-
-            return ResponseEntity.ok(convertToMapDetailed(updated));
+            utilisateurRepository.save(utilisateur);
+            return ResponseEntity.ok(ApiResponse.ok("Utilisateur mis à jour", convertToMapDetailed(utilisateur)));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
     /**
      * Désactiver un utilisateur
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deactivateUtilisateur(@PathVariable Integer id, HttpSession session) {
+    @PostMapping("/{id}/deactivate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deactivateUtilisateur(@PathVariable Integer id,
+            HttpSession session) {
         try {
             Integer adminId = (Integer) session.getAttribute("userId");
             if (adminId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
             }
-
-            authenticationService.deactivateUser(id, adminId);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Utilisateur désactivé avec succès");
-            return ResponseEntity.ok(response);
+            Utilisateur utilisateur = utilisateurRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            utilisateur.setActif(false);
+            utilisateurRepository.save(utilisateur);
+            logActionService.logAction(
+                    com.example.candidatureplus.entity.LogAction.TypeActeur.Utilisateur,
+                    adminId,
+                    "DESACTIVATION_UTILISATEUR",
+                    "Utilisateur",
+                    id.longValue());
+            return ResponseEntity.ok(ApiResponse.ok("Utilisateur désactivé", convertToMapDetailed(utilisateur)));
         } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Erreur lors de la désactivation: " + e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Changer le mot de passe d'un utilisateur
-     */
-    @PostMapping("/{id}/change-password")
-    public ResponseEntity<Map<String, String>> changePassword(@PathVariable Integer id,
-            @RequestBody Map<String, String> passwordData,
-            HttpSession session) {
-        try {
-            Integer userId = (Integer) session.getAttribute("userId");
-            if (userId == null) {
-                return ResponseEntity.status(401).build();
-            }
-
-            // Un utilisateur ne peut changer que son propre mot de passe, ou un admin peut
-            // changer celui des autres
-            Utilisateur currentUser = utilisateurRepository.findById(userId).orElse(null);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).build();
-            }
-
-            boolean isAdmin = currentUser.getRole() == Utilisateur.Role.Administrateur;
-            boolean isSelf = userId.equals(id);
-
-            if (!isAdmin && !isSelf) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Vous n'avez pas l'autorisation de changer ce mot de passe");
-                return ResponseEntity.status(403).body(error);
-            }
-
-            String oldPassword = passwordData.get("oldPassword");
-            String newPassword = passwordData.get("newPassword");
-
-            if (isSelf && oldPassword == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "L'ancien mot de passe est requis");
-                return ResponseEntity.badRequest().body(error);
-            }
-
-            authenticationService.changePassword(id, oldPassword, newPassword);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Mot de passe changé avec succès");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Erreur lors du changement de mot de passe: " + e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Récupérer les utilisateurs par rôle
-     */
-    @GetMapping("/role/{role}")
-    public ResponseEntity<List<Map<String, Object>>> getUtilisateursByRole(@PathVariable String role,
-            HttpSession session) {
-        try {
-            Integer userId = (Integer) session.getAttribute("userId");
-            if (userId == null) {
-                return ResponseEntity.status(401).build();
-            }
-
-            Utilisateur.Role userRole = Utilisateur.Role.valueOf(role);
-            List<Utilisateur> utilisateurs = utilisateurRepository.findAll().stream()
-                    .filter(u -> u.getRole() == userRole && u.getActif())
-                    .collect(Collectors.toList());
-
-            List<Map<String, Object>> result = utilisateurs.stream()
-                    .map(this::convertToMapSimple)
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -314,35 +177,26 @@ public class UtilisateurController {
      * Réactiver un utilisateur
      */
     @PostMapping("/{id}/reactivate")
-    public ResponseEntity<Map<String, String>> reactivateUtilisateur(@PathVariable Integer id, HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> reactivateUtilisateur(@PathVariable Integer id,
+            HttpSession session) {
         try {
             Integer adminId = (Integer) session.getAttribute("userId");
             if (adminId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
             }
-
             Utilisateur utilisateur = utilisateurRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
             utilisateur.setActif(true);
             utilisateurRepository.save(utilisateur);
-
-            // Logger l'action
             logActionService.logAction(
                     com.example.candidatureplus.entity.LogAction.TypeActeur.Utilisateur,
                     adminId,
                     "REACTIVATION_UTILISATEUR",
                     "Utilisateur",
                     id.longValue());
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Utilisateur réactivé avec succès");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.ok("Utilisateur réactivé", convertToMapDetailed(utilisateur)));
         } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Erreur lors de la réactivation: " + e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -350,15 +204,13 @@ public class UtilisateurController {
      * Statistiques des utilisateurs
      */
     @GetMapping("/statistiques")
-    public ResponseEntity<Map<String, Object>> getStatistiques(HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStatistiques(HttpSession session) {
         try {
             Integer userId = (Integer) session.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
             }
-
             Map<String, Object> stats = new HashMap<>();
-
             long totalUtilisateurs = utilisateurRepository.count();
             long utilisateursActifs = utilisateurRepository.findAll().stream()
                     .filter(Utilisateur::getActif)
@@ -372,18 +224,15 @@ public class UtilisateurController {
             long administrateurs = utilisateurRepository.findAll().stream()
                     .filter(u -> u.getRole() == Utilisateur.Role.Administrateur && u.getActif())
                     .count();
-
             stats.put("total", totalUtilisateurs);
             stats.put("actifs", utilisateursActifs);
             stats.put("inactifs", totalUtilisateurs - utilisateursActifs);
             stats.put("gestionnairesLocaux", gestionnairesLocaux);
             stats.put("gestionnairesGlobaux", gestionnairesGlobaux);
             stats.put("administrateurs", administrateurs);
-
-            return ResponseEntity.ok(stats);
+            return ResponseEntity.ok(ApiResponse.ok(stats));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -398,22 +247,16 @@ public class UtilisateurController {
         map.put("role", utilisateur.getRole());
         map.put("actif", utilisateur.getActif());
         map.put("dateCreation", utilisateur.getDateCreation());
-        map.put("derniereConnexion", utilisateur.getDerniereConnexion());
-
-        if (utilisateur.getCentre() != null) {
-            Map<String, Object> centreMap = new HashMap<>();
-            centreMap.put("id", utilisateur.getCentre().getId());
-            centreMap.put("nom", utilisateur.getCentre().getNom());
-            centreMap.put("ville", utilisateur.getCentre().getVille());
-            map.put("centre", centreMap);
-        }
-
         return map;
     }
 
     private Map<String, Object> convertToMapDetailed(Utilisateur utilisateur) {
         Map<String, Object> map = convertToMapSimple(utilisateur);
-        map.put("centresAssignes", utilisateur.getCentresAssignes());
+        if (utilisateur.getCentre() != null) {
+            map.put("centre", Map.of(
+                    "id", utilisateur.getCentre().getId(),
+                    "nom", utilisateur.getCentre().getNom()));
+        }
         return map;
     }
 }

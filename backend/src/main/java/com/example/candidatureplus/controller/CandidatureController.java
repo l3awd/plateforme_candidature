@@ -6,6 +6,7 @@ import com.example.candidatureplus.dto.*;
 import com.example.candidatureplus.service.CandidatureService;
 import com.example.candidatureplus.service.CandidatureEnhancedService;
 import com.example.candidatureplus.service.NotificationService;
+import com.example.candidatureplus.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,6 @@ import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/candidatures")
@@ -47,53 +47,37 @@ public class CandidatureController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private DocumentService documentService;
+
     @PostMapping("/soumettre")
-    public ResponseEntity<CandidatureResponse> soumettreCandidate(@RequestBody CandidatureRequest request) {
+    public ResponseEntity<ApiResponse<CandidatureResponse>> soumettreCandidate(
+            @RequestBody CandidatureRequest request) {
         try {
-            // Vérifier si le candidat existe déjà par CIN ou email
-            Candidat candidat = candidatRepository.findByCin(request.getCandidat().getCin())
-                    .orElse(null);
-
-            if (candidat == null) {
-                candidat = candidatRepository.findByEmail(request.getCandidat().getEmail())
-                        .orElse(null);
+            // Harmonisation des valeurs Genre côté backend (Masculin/Feminin)
+            if (request.getCandidat() != null && request.getCandidat().getGenre() == null) {
+                // mapping éventuel si nécessaire
             }
-
-            // Si le candidat n'existe pas, le créer
+            Candidat candidat = candidatRepository.findByCin(request.getCandidat().getCin())
+                    .orElseGet(() -> candidatRepository.findByEmail(request.getCandidat().getEmail()).orElse(null));
             if (candidat == null) {
                 candidat = new Candidat();
                 candidat.setNumeroUnique(generateNumeroUnique());
-                copyDataFromRequest(candidat, request.getCandidat());
-                candidat = candidatRepository.save(candidat);
-            } else {
-                // Mettre à jour les informations du candidat existant
-                copyDataFromRequest(candidat, request.getCandidat());
-                candidat = candidatRepository.save(candidat);
             }
+            copyDataFromRequest(candidat, request.getCandidat());
+            candidat = candidatRepository.save(candidat);
 
-            // Vérifier si le candidat a déjà une candidature pour ce concours
-            boolean existingCandidature = candidatureRepository.existsByCandidat_IdAndConcours_Id(
-                    candidat.getId(), request.getConcoursId());
-
-            if (existingCandidature) {
+            if (candidatureRepository.existsByCandidat_IdAndConcours_Id(candidat.getId(), request.getConcoursId())) {
                 return ResponseEntity.badRequest()
-                        .body(CandidatureResponse.builder()
-                                .success(false)
-                                .message("Vous avez déjà une candidature pour ce concours")
-                                .build());
+                        .body(ApiResponse.error("Vous avez déjà une candidature pour ce concours"));
             }
-
-            // Récupérer les entités liées
             Concours concours = concoursRepository.findById(request.getConcoursId())
                     .orElseThrow(() -> new RuntimeException("Concours non trouvé"));
-
             Specialite specialite = specialiteRepository.findById(request.getSpecialiteId())
                     .orElseThrow(() -> new RuntimeException("Spécialité non trouvée"));
-
             Centre centre = centreRepository.findById(request.getCentreId())
                     .orElseThrow(() -> new RuntimeException("Centre non trouvé"));
 
-            // Créer la candidature
             Candidature candidature = new Candidature();
             candidature.setCandidat(candidat);
             candidature.setConcours(concours);
@@ -101,171 +85,197 @@ public class CandidatureController {
             candidature.setCentre(centre);
             candidature.setEtat(Candidature.Etat.Soumise);
             candidature.setDateSoumission(LocalDateTime.now());
-
             candidature = candidatureRepository.save(candidature);
+            // Rattacher éventuels documents pré-uploadés (CIN, CV, Diplome) via CIN
+            try {
+                documentService.rattacherPreUploadedDocuments(candidat.getCin(), candidature.getId());
+            } catch (Exception ignore) {
+            }
 
-            // Envoyer notification d'inscription
             notificationService.envoyerNotificationInscription(candidature);
 
-            return ResponseEntity.ok(CandidatureResponse.builder()
-                    .success(true)
+            CandidatureResponse payload = CandidatureResponse.builder().success(true)
                     .message("Candidature soumise avec succès")
                     .numeroUnique(candidat.getNumeroUnique())
-                    .build());
-
+                    .candidatureId(candidature.getId())
+                    .build();
+            return ResponseEntity.ok(ApiResponse.ok(payload));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(CandidatureResponse.builder()
-                            .success(false)
-                            .message("Erreur lors de la soumission: " + e.getMessage())
-                            .build());
+                    .body(ApiResponse.error("Erreur lors de la soumission: " + e.getMessage()));
         }
     }
 
     @PostMapping("/soumettre-avec-cv")
-    public ResponseEntity<CandidatureResponse> soumettreAvecCV(
+    public ResponseEntity<ApiResponse<CandidatureResponse>> soumettreAvecCV(
             @RequestParam("data") String jsonData,
             @RequestParam(value = "cv", required = false) MultipartFile cvFile) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             CandidatureRequest request = objectMapper.readValue(jsonData, CandidatureRequest.class);
-
             CandidatureResponse response = candidatureEnhancedService.soumettreAvecCV(request, cvFile);
-            return ResponseEntity.ok(response);
+            if (!response.isSuccess())
+                return ResponseEntity.badRequest().body(ApiResponse.error(response.getMessage()));
+            return ResponseEntity.ok(ApiResponse.ok(response));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(CandidatureResponse.builder()
-                            .success(false)
-                            .message("Erreur lors de la soumission: " + e.getMessage())
-                            .build());
+                    .body(ApiResponse.error("Erreur lors de la soumission: " + e.getMessage()));
         }
     }
 
     @GetMapping("/centre/{centreId}")
-    public ResponseEntity<List<Map<String, Object>>> getCandidaturesByCentre(@PathVariable Integer centreId) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCandidaturesByCentre(
+            @PathVariable Integer centreId, HttpSession session) {
         try {
-            List<Map<String, Object>> candidatures = candidatureService.getCandidaturesByCentre(centreId);
-            return ResponseEntity.ok(candidatures);
+            Integer userId = (Integer) session.getAttribute("userId");
+            List<Map<String, Object>> candidatures = candidatureService.getCandidaturesByCentre(centreId, userId);
+            return ResponseEntity.ok(ApiResponse.ok(candidatures));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
     @GetMapping("/centre/{centreId}/etat/{etat}")
-    public ResponseEntity<List<Map<String, Object>>> getCandidaturesByCentreAndEtat(
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCandidaturesByCentreAndEtat(
             @PathVariable Integer centreId,
-            @PathVariable String etat) {
+            @PathVariable String etat,
+            HttpSession session) {
         try {
-            // Récupérer toutes les candidatures du centre et filtrer par état
-            List<Map<String, Object>> candidaturesMap = candidatureService.getCandidaturesByCentre(centreId)
-                    .stream()
+            Integer userId = (Integer) session.getAttribute("userId");
+            List<Map<String, Object>> base = candidatureService.getCandidaturesByCentre(centreId, userId);
+            List<Map<String, Object>> candidaturesMap = base.stream()
                     .filter(c -> etat.equals(c.get("etat")))
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(candidaturesMap);
+                    .collect(java.util.stream.Collectors.toList());
+            return ResponseEntity.ok(ApiResponse.ok(candidaturesMap));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
     @PostMapping("/{id}/valider")
-    public ResponseEntity<ValidationResponse> validerCandidature(
+    public ResponseEntity<ApiResponse<ValidationResponse>> validerCandidature(
             @PathVariable Integer id,
             @RequestBody ValidationRequest request,
             HttpSession session) {
 
         try {
-            // Vérifier l'authentification
             Integer userId = (Integer) session.getAttribute("userId");
-            if (userId == null) {
-                return ResponseEntity.status(401)
-                        .body(ValidationResponse.failure("Non authentifié"));
-            }
-
-            ValidationResponse response = candidatureService.validerCandidature(id, request, userId);
-            return ResponseEntity.ok(response);
-
+            if (userId == null)
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
+            ValidationResponse resp = candidatureService.validerCandidature(id, request, userId);
+            if (!resp.isSuccess())
+                return ResponseEntity.badRequest().body(ApiResponse.error(resp.getMessage()));
+            return ResponseEntity.ok(ApiResponse.ok(resp));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ValidationResponse.failure("Erreur lors de la validation: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
     @PostMapping("/{id}/rejeter")
-    public ResponseEntity<ValidationResponse> rejeterCandidature(
+    public ResponseEntity<ApiResponse<ValidationResponse>> rejeterCandidature(
             @PathVariable Integer id,
             @RequestBody RejetRequest request,
             HttpSession session) {
 
         try {
-            // Vérifier l'authentification
             Integer userId = (Integer) session.getAttribute("userId");
-            if (userId == null) {
-                return ResponseEntity.status(401)
-                        .body(ValidationResponse.failure("Non authentifié"));
-            }
-
-            ValidationResponse response = candidatureService.rejeterCandidature(id, request, userId);
-            return ResponseEntity.ok(response);
-
+            if (userId == null)
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
+            ValidationResponse resp = candidatureService.rejeterCandidature(id, request, userId);
+            if (!resp.isSuccess())
+                return ResponseEntity.badRequest().body(ApiResponse.error(resp.getMessage()));
+            return ResponseEntity.ok(ApiResponse.ok(resp));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ValidationResponse.failure("Erreur lors du rejet: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/confirmer")
+    public ResponseEntity<ApiResponse<ValidationResponse>> confirmerCandidature(
+            @PathVariable Integer id,
+            HttpSession session) {
+        try {
+            Integer userId = (Integer) session.getAttribute("userId");
+            if (userId == null)
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
+            ValidationResponse resp = candidatureService.confirmerCandidature(id, userId);
+            if (!resp.isSuccess())
+                return ResponseEntity.badRequest().body(ApiResponse.error(resp.getMessage()));
+            return ResponseEntity.ok(ApiResponse.ok(resp));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
     @GetMapping("/suivi/{numeroUnique}")
-    public ResponseEntity<?> suivreCandidature(@PathVariable String numeroUnique) {
+    public ResponseEntity<ApiResponse<Object>> suivreCandidature(@PathVariable String numeroUnique) {
         try {
             Candidat candidat = candidatRepository.findByNumeroUnique(numeroUnique)
                     .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
-
             List<Candidature> candidatures = candidatureRepository.findByCandidat_Id(candidat.getId());
-
             if (candidatures.isEmpty()) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(404).body(ApiResponse.error("Aucune candidature trouvée"));
             }
-
-            // Pour l'instant, retourner la première candidature
-            Candidature candidature = candidatures.get(0);
-            return ResponseEntity.ok(candidature);
-
+            return ResponseEntity.ok(ApiResponse.ok(candidatures.get(0)));
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(404).body(ApiResponse.error(e.getMessage()));
         }
     }
 
     @GetMapping("/statistiques/globales")
-    public ResponseEntity<Map<String, Object>> getStatistiquesGlobales(HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStatistiquesGlobales(HttpSession session) {
         try {
             Integer userId = (Integer) session.getAttribute("userId");
-            if (userId == null) {
-                return ResponseEntity.status(401).build();
-            }
-
-            Map<String, Object> stats = candidatureService.getStatistiquesGlobales();
-            return ResponseEntity.ok(stats);
-
+            if (userId == null)
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
+            return ResponseEntity.ok(ApiResponse.ok(candidatureService.getStatistiquesGlobales(userId)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
     @GetMapping("/statistiques/centre/{centreId}")
-    public ResponseEntity<Map<String, Object>> getStatistiquesCentre(@PathVariable Integer centreId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStatistiquesCentre(@PathVariable Integer centreId,
+            HttpSession session) {
         try {
-            Map<String, Object> stats = candidatureService.getStatistiquesCentre(centreId);
-            return ResponseEntity.ok(stats);
+            Integer userId = (Integer) session.getAttribute("userId");
+            return ResponseEntity
+                    .ok(ApiResponse.ok(userId != null ? candidatureService.getStatistiquesCentreSecure(centreId, userId)
+                            : candidatureService.getStatistiquesCentre(centreId)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
+    @GetMapping("/recherche")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> rechercherCandidatures(
+            @RequestParam(required = false) String numeroUnique,
+            @RequestParam(required = false) String nom,
+            @RequestParam(required = false) String cin,
+            @RequestParam(required = false) String statut,
+            @RequestParam(required = false) Integer centreId,
+            HttpSession session) {
+        try {
+            Integer userId = (Integer) session.getAttribute("userId");
+            List<Map<String, Object>> candidatures = (userId != null)
+                    ? candidatureService.rechercherCandidaturesForUser(numeroUnique, nom, cin, statut, centreId, userId)
+                    : candidatureService.rechercherCandidatures(numeroUnique, nom, cin, statut, centreId);
+            return ResponseEntity.ok(ApiResponse.ok(candidatures));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    // export CSV laissé brut (fichier) pour compatibilité téléchargement
     @GetMapping("/export/csv")
     public ResponseEntity<String> exporterCandidaturesCSV(
             @RequestParam(required = false) Integer centreId,
-            @RequestParam(required = false) String statut) {
+            @RequestParam(required = false) String statut,
+            HttpSession session) {
         try {
-            String csvContent = candidatureService.exporterCandidaturesCSV(centreId, statut);
+            Integer userId = (Integer) session.getAttribute("userId");
+            String csvContent = userId != null ? candidatureService.exporterCandidaturesCSV(centreId, statut, userId)
+                    : candidatureService.exporterCandidaturesCSV(centreId, statut);
             return ResponseEntity.ok()
                     .header("Content-Type", "text/csv")
                     .header("Content-Disposition", "attachment; filename=candidatures.csv")
@@ -275,25 +285,95 @@ public class CandidatureController {
         }
     }
 
-    @GetMapping("/recherche")
-    public ResponseEntity<List<Map<String, Object>>> rechercherCandidatures(
-            @RequestParam(required = false) String numeroUnique,
-            @RequestParam(required = false) String nom,
-            @RequestParam(required = false) String cin,
-            @RequestParam(required = false) String statut,
-            @RequestParam(required = false) Integer centreId) {
+    @GetMapping("/export/quotas-csv")
+    public ResponseEntity<String> exportQuotasCsv(@RequestParam(required = false) Integer concoursId,
+            HttpSession session) {
         try {
-            List<Map<String, Object>> candidatures = candidatureService.rechercherCandidatures(
-                    numeroUnique, nom, cin, statut, centreId);
-            return ResponseEntity.ok(candidatures);
+            Object roleObj = session.getAttribute("userRole");
+            if (roleObj == null)
+                return ResponseEntity.status(401).build();
+            // Vérifier rôle (l'enum est stockée directement en session dans login)
+            if (!(roleObj instanceof com.example.candidatureplus.entity.Utilisateur.Role role)
+                    || role != com.example.candidatureplus.entity.Utilisateur.Role.GestionnaireGlobal) {
+                return ResponseEntity.status(403).build();
+            }
+            String csv = candidatureService.exporterQuotasOccupationCSV(concoursId);
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/csv")
+                    .header("Content-Disposition", "attachment; filename=quotas_occupation.csv")
+                    .body(csv);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
+    @GetMapping("/{id}/documents/manquants")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getDocumentsManquants(@PathVariable Integer id) {
+        try {
+            List<String> manquants = documentService.getDocumentsManquants(id);
+            Map<String, Object> data = Map.of(
+                    "documentsManquants", manquants,
+                    "complets", manquants.isEmpty());
+            return ResponseEntity.ok(ApiResponse.ok(data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/statistiques/multi")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> statistiquesMulti(
+            @RequestParam(required = false) Integer concoursId,
+            HttpSession session) {
+        try {
+            Integer userId = (Integer) session.getAttribute("userId");
+            Map<String, Object> data = (userId != null)
+                    ? candidatureService.getStatistiquesMultiAxesForUser(concoursId, userId)
+                    : candidatureService.getStatistiquesMultiAxes(concoursId);
+            return ResponseEntity.ok(ApiResponse.ok(data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/statistiques/avancees")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> statistiquesAvancees(HttpSession session) {
+        try {
+            Integer userId = (Integer) session.getAttribute("userId");
+            Map<String, Object> data = (userId != null) ? candidatureService.getStatistiquesAvanceesForUser(userId)
+                    : candidatureService.getStatistiquesAvancees();
+            return ResponseEntity.ok(ApiResponse.ok(data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/kpi/synthese")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> kpiSynthese(HttpSession session) {
+        try {
+            Integer userId = (Integer) session.getAttribute("userId");
+            if (userId == null)
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
+            return ResponseEntity.ok(ApiResponse.ok(candidatureService.getKpiSynthese(userId)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/kpi/timeline30j")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> kpiTimeline30(HttpSession session) {
+        try {
+            Integer userId = (Integer) session.getAttribute("userId");
+            if (userId == null)
+                return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
+            return ResponseEntity.ok(ApiResponse.ok(candidatureService.getTimeline30J(userId)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     // Méthodes utilitaires
     private String generateNumeroUnique() {
-        return "CAND" + System.currentTimeMillis();
+        return "CAND-" + System.currentTimeMillis();
     }
 
     private void copyDataFromRequest(Candidat candidat, CandidatureRequest.CandidatData candidatRequest) {

@@ -11,20 +11,23 @@ import java.util.Optional;
 @Repository
 public interface CentreSpecialiteRepository extends JpaRepository<CentreSpecialite, Integer> {
 
-    List<CentreSpecialite> findByCentre_Id(Integer centreId);
+        List<CentreSpecialite> findByCentre_Id(Integer centreId);
 
-    List<CentreSpecialite> findBySpecialite_Id(Integer specialiteId);
+        List<CentreSpecialite> findBySpecialite_Id(Integer specialiteId);
 
-    List<CentreSpecialite> findByConcours_Id(Integer concoursId);
+        List<CentreSpecialite> findByConcours_Id(Integer concoursId);
 
-    @Query("SELECT cs FROM CentreSpecialite cs WHERE cs.centre.id = :centreId AND cs.specialite.id = :specialiteId AND cs.concours.id = :concoursId")
-    Optional<CentreSpecialite> findByCentreIdAndSpecialiteIdAndConcoursId(
-            @Param("centreId") Integer centreId,
-            @Param("specialiteId") Integer specialiteId,
-            @Param("concoursId") Integer concoursId);
+        @Query("SELECT cs FROM CentreSpecialite cs WHERE cs.centre.id = :centreId AND cs.specialite.id = :specialiteId AND cs.concours.id = :concoursId")
+        Optional<CentreSpecialite> findByCentreIdAndSpecialiteIdAndConcoursId(
+                        @Param("centreId") Integer centreId,
+                        @Param("specialiteId") Integer specialiteId,
+                        @Param("concoursId") Integer concoursId);
 
-    @Query("SELECT cs FROM CentreSpecialite cs WHERE cs.centre.id = :centreId AND cs.concours.id = :concoursId")
-    List<CentreSpecialite> findByCentreIdAndConcoursId(
-            @Param("centreId") Integer centreId,
-            @Param("concoursId") Integer concoursId);
+        @Query("SELECT cs FROM CentreSpecialite cs WHERE cs.centre.id = :centreId AND cs.concours.id = :concoursId")
+        List<CentreSpecialite> findByCentreIdAndConcoursId(
+                        @Param("centreId") Integer centreId,
+                        @Param("concoursId") Integer concoursId);
+
+        @Query("SELECT cs FROM CentreSpecialite cs WHERE cs.concours.id = :concoursId")
+        List<CentreSpecialite> findByConcoursId(@Param("concoursId") Integer concoursId);
 }

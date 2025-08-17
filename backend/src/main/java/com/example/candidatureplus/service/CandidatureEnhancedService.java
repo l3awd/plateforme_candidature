@@ -8,9 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,30 +22,20 @@ public class CandidatureEnhancedService {
 
     @Autowired
     private CandidatureRepository candidatureRepository;
-
     @Autowired
     private CandidatRepository candidatRepository;
-
     @Autowired
     private ConcoursRepository concoursRepository;
-
     @Autowired
     private SpecialiteRepository specialiteRepository;
-
     @Autowired
     private CentreRepository centreRepository;
-
     @Autowired
     private ConcoursSpecialiteRepository concoursSpecialiteRepository;
-
     @Autowired
     private ConcoursCentreRepository concoursCentreRepository;
 
-    @Autowired
-    private NotificationService notificationService;
-
     private final String UPLOAD_DIR = "uploads/cv/";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Soumettre une candidature avec upload CV
@@ -82,9 +69,6 @@ public class CandidatureEnhancedService {
             }
 
             candidature = candidatureRepository.save(candidature);
-
-            // Envoyer email de confirmation
-            notificationService.envoyerConfirmationCandidature(candidature);
 
             return CandidatureResponse.builder()
                     .success(true)
@@ -198,7 +182,6 @@ public class CandidatureEnhancedService {
     /**
      * Récupérer centres assignés à un gestionnaire
      */
-    @SuppressWarnings("unchecked")
     private List<Integer> getCentresAssignes(Integer gestionnaireId) {
         try {
             // Cette méthode devrait être dans UtilisateurService, mais pour simplifier...

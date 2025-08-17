@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.Optional;
+import com.example.candidatureplus.dto.ApiResponse; // added
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,7 +24,8 @@ public class AuthController {
      * Endpoint de connexion
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpSession session) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest,
+            HttpSession session) {
         System.out.println("=== LOGIN REQUEST ===");
         System.out.println("Email reçu: " + loginRequest.getEmail());
         System.out.println("Password reçu: " + loginRequest.getPassword());
@@ -41,16 +43,15 @@ public class AuthController {
                 session.setAttribute("userId", utilisateur.getId());
                 session.setAttribute("userRole", utilisateur.getRole());
 
-                return ResponseEntity.ok(LoginResponse.success(utilisateur));
+                return ResponseEntity.ok(ApiResponse.ok(LoginResponse.success(utilisateur)));
             } else {
-                return ResponseEntity.badRequest()
-                        .body(LoginResponse.failure("Email ou mot de passe incorrect"));
+                return ResponseEntity.badRequest().body(ApiResponse.error("Email ou mot de passe incorrect"));
             }
         } catch (Exception e) {
             System.err.println("ERREUR DANS LOGIN: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body(LoginResponse.failure("Erreur lors de l'authentification: " + e.getMessage()));
+                    .body(ApiResponse.error("Erreur lors de l'authentification: " + e.getMessage()));
         }
     }
 
@@ -58,23 +59,22 @@ public class AuthController {
      * Endpoint de déconnexion
      */
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpSession session) {
+    public ResponseEntity<ApiResponse<String>> logout(HttpSession session) {
         session.invalidate();
-        return ResponseEntity.ok("Déconnexion réussie");
+        return ResponseEntity.ok(ApiResponse.ok("Déconnexion réussie", "Déconnexion réussie"));
     }
 
     /**
      * Endpoint pour vérifier si l'utilisateur est connecté
      */
     @GetMapping("/current")
-    public ResponseEntity<LoginResponse> getCurrentUser(HttpSession session) {
+    public ResponseEntity<ApiResponse<LoginResponse>> getCurrentUser(HttpSession session) {
         Utilisateur utilisateur = (Utilisateur) session.getAttribute("utilisateur");
 
         if (utilisateur != null) {
-            return ResponseEntity.ok(LoginResponse.success(utilisateur));
+            return ResponseEntity.ok(ApiResponse.ok(LoginResponse.success(utilisateur)));
         } else {
-            return ResponseEntity.status(401)
-                    .body(LoginResponse.failure("Non authentifié"));
+            return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
         }
     }
 
@@ -82,7 +82,7 @@ public class AuthController {
      * Endpoint de debug pour tester l'authentification
      */
     @PostMapping("/debug")
-    public ResponseEntity<String> debugAuth(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<String>> debugAuth(@RequestBody LoginRequest loginRequest) {
         try {
             System.out.println("=== DEBUG AUTH ===");
             System.out.println("Email reçu: " + loginRequest.getEmail());
@@ -93,13 +93,14 @@ public class AuthController {
                     loginRequest.getPassword());
 
             if (result.isPresent()) {
-                return ResponseEntity.ok("Authentification réussie pour: " + result.get().getEmail());
+                return ResponseEntity.ok(ApiResponse.ok("Authentification réussie",
+                        "Authentification réussie pour: " + result.get().getEmail()));
             } else {
-                return ResponseEntity.badRequest().body("Authentification échouée");
+                return ResponseEntity.badRequest().body(ApiResponse.error("Authentification échouée"));
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Erreur: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erreur: " + e.getMessage()));
         }
     }
 
@@ -107,21 +108,21 @@ public class AuthController {
      * Endpoint pour changer le mot de passe
      */
     @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(
+    public ResponseEntity<ApiResponse<String>> changePassword(
             @RequestParam String oldPassword,
             @RequestParam String newPassword,
             HttpSession session) {
 
         Integer userId = (Integer) session.getAttribute("userId");
         if (userId == null) {
-            return ResponseEntity.status(401).body("Non authentifié");
+            return ResponseEntity.status(401).body(ApiResponse.error("Non authentifié"));
         }
 
         try {
             authenticationService.changePassword(userId, oldPassword, newPassword);
-            return ResponseEntity.ok("Mot de passe modifié avec succès");
+            return ResponseEntity.ok(ApiResponse.ok("Mot de passe modifié", "Mot de passe modifié avec succès"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 }

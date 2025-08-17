@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -44,7 +43,21 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Utiliser NoOpPasswordEncoder pour pas de cryptage (développement uniquement)
-        return NoOpPasswordEncoder.getInstance();
+        // Encoder clair (spécification) sans dépréciation
+        return new PasswordEncoder() {
+            @Override
+            public String encode(CharSequence rawPassword) {
+                return rawPassword == null ? null : rawPassword.toString();
+            }
+
+            @Override
+            public boolean matches(CharSequence rawPassword, String encodedPassword) {
+                if (rawPassword == null && encodedPassword == null)
+                    return true;
+                if (rawPassword == null || encodedPassword == null)
+                    return false;
+                return encodedPassword.contentEquals(rawPassword);
+            }
+        };
     }
 }

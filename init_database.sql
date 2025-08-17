@@ -97,7 +97,7 @@ CREATE TABLE Candidat (
     numero_unique VARCHAR(50) UNIQUE NOT NULL,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
-    genre ENUM('Monsieur', 'Madame') NOT NULL,
+    genre ENUM('Masculin', 'Feminin') NOT NULL,
     cin VARCHAR(20) UNIQUE NOT NULL,
     date_naissance DATE NOT NULL,
     lieu_naissance VARCHAR(100) NOT NULL,
@@ -141,7 +141,8 @@ CREATE TABLE Candidature (
 -- Table Documents
 CREATE TABLE Document (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    candidature_id INT NOT NULL,
+    candidature_id INT NULL,
+    cin_temp VARCHAR(20) NULL,
     type_document ENUM('CIN', 'CV', 'Diplome', 'Releve_Notes', 'Photo', 'Autre') NOT NULL,
     nom_fichier VARCHAR(255) NOT NULL,
     chemin_fichier VARCHAR(500) NOT NULL,

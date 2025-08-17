@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
+import com.example.candidatureplus.dto.ApiResponse; // added
 
 @RestController
 @RequestMapping("/api/concours")
@@ -24,13 +25,10 @@ public class ConcoursController {
 
     @Autowired
     private ConcoursRepository concoursRepository;
-
     @Autowired
     private ConcoursSpecialiteRepository concoursSpecialiteRepository;
-
     @Autowired
     private ConcoursCentreRepository concoursCentreRepository;
-
     @Autowired
     private CandidatureRepository candidatureRepository;
 
@@ -38,7 +36,7 @@ public class ConcoursController {
      * Récupérer tous les concours
      */
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAllConcours() {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllConcours() {
         try {
             List<Concours> concours = concoursRepository.findAll();
 
@@ -46,10 +44,9 @@ public class ConcoursController {
                     .map(this::convertToMapSimple)
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(concoursSimples);
+            return ResponseEntity.ok(ApiResponse.ok(concoursSimples));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -57,15 +54,14 @@ public class ConcoursController {
      * Récupérer un concours par ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getConcoursById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getConcoursById(@PathVariable Integer id) {
         try {
             Concours concours = concoursRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Concours non trouvé"));
 
-            return ResponseEntity.ok(convertToMapDetailed(concours));
+            return ResponseEntity.ok(ApiResponse.ok(convertToMapDetailed(concours)));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -73,7 +69,7 @@ public class ConcoursController {
      * Récupérer les concours actifs (ouverts aux candidatures)
      */
     @GetMapping("/actifs")
-    public ResponseEntity<List<Map<String, Object>>> getConcoursActifs() {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getConcoursActifs() {
         try {
             LocalDate aujourdhui = LocalDate.now();
             List<Concours> concoursActifs = concoursRepository.findConcoursActifs(aujourdhui);
@@ -82,10 +78,9 @@ public class ConcoursController {
                     .map(this::convertToMapSimple)
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ApiResponse.ok(result));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -93,7 +88,7 @@ public class ConcoursController {
      * Récupérer les spécialités d'un concours
      */
     @GetMapping("/{id}/specialites")
-    public ResponseEntity<List<Map<String, Object>>> getSpecialitesByConcours(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSpecialitesByConcours(@PathVariable Integer id) {
         try {
             List<Specialite> specialites = concoursSpecialiteRepository.findSpecialitesByConcoursId(id);
 
@@ -101,10 +96,9 @@ public class ConcoursController {
                     .map(this::convertSpecialiteToMap)
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(specialitesSimples);
+            return ResponseEntity.ok(ApiResponse.ok(specialitesSimples));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -112,7 +106,7 @@ public class ConcoursController {
      * Récupérer les centres d'un concours
      */
     @GetMapping("/{id}/centres")
-    public ResponseEntity<List<Map<String, Object>>> getCentresByConcours(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCentresByConcours(@PathVariable Integer id) {
         try {
             List<Centre> centres = concoursCentreRepository.findCentresByConcoursId(id);
 
@@ -120,10 +114,9 @@ public class ConcoursController {
                     .map(this::convertCentreToMap)
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(centresSimples);
+            return ResponseEntity.ok(ApiResponse.ok(centresSimples));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -131,7 +124,8 @@ public class ConcoursController {
      * Créer un nouveau concours
      */
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createConcours(@RequestBody Map<String, Object> concoursData) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createConcours(
+            @RequestBody Map<String, Object> concoursData) {
         try {
             Concours concours = new Concours();
             concours.setNom((String) concoursData.get("nom"));
@@ -156,10 +150,9 @@ public class ConcoursController {
             concours.setActif(actif != null ? actif : true);
 
             Concours saved = concoursRepository.save(concours);
-            return ResponseEntity.ok(convertToMapDetailed(saved));
+            return ResponseEntity.ok(ApiResponse.ok("Concours créé", convertToMapDetailed(saved)));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -167,7 +160,7 @@ public class ConcoursController {
      * Mettre à jour un concours
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateConcours(@PathVariable Integer id,
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateConcours(@PathVariable Integer id,
             @RequestBody Map<String, Object> concoursData) {
         try {
             Concours concours = concoursRepository.findById(id)
@@ -202,10 +195,9 @@ public class ConcoursController {
             }
 
             Concours updated = concoursRepository.save(concours);
-            return ResponseEntity.ok(convertToMapDetailed(updated));
+            return ResponseEntity.ok(ApiResponse.ok("Concours mis à jour", convertToMapDetailed(updated)));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -213,32 +205,29 @@ public class ConcoursController {
      * Supprimer un concours (désactivation)
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteConcours(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> deleteConcours(@PathVariable Integer id) {
         try {
             Concours concours = concoursRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Concours non trouvé"));
 
             // Vérifier s'il y a des candidatures
             long nbCandidatures = candidatureRepository.findByConcours_Id(id).size();
+            Map<String, String> response = new HashMap<>();
             if (nbCandidatures > 0) {
                 // Désactiver au lieu de supprimer
                 concours.setActif(false);
                 concoursRepository.save(concours);
 
-                Map<String, String> response = new HashMap<>();
                 response.put("message", "Concours désactivé car il y a des candidatures associées");
-                return ResponseEntity.ok(response);
             } else {
                 // Supprimer complètement
                 concoursRepository.delete(concours);
 
-                Map<String, String> response = new HashMap<>();
                 response.put("message", "Concours supprimé avec succès");
-                return ResponseEntity.ok(response);
             }
+            return ResponseEntity.ok(ApiResponse.ok(response));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -246,7 +235,7 @@ public class ConcoursController {
      * Statistiques d'un concours
      */
     @GetMapping("/{id}/statistiques")
-    public ResponseEntity<Map<String, Object>> getStatistiquesConcours(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStatistiquesConcours(@PathVariable Integer id) {
         try {
             Map<String, Object> stats = new HashMap<>();
 
@@ -257,10 +246,9 @@ public class ConcoursController {
             stats.put("specialitesDisponibles", concoursSpecialiteRepository.findByConcoursId(id).size());
             stats.put("centresDisponibles", concoursCentreRepository.findByConcoursId(id).size());
 
-            return ResponseEntity.ok(stats);
+            return ResponseEntity.ok(ApiResponse.ok(stats));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
