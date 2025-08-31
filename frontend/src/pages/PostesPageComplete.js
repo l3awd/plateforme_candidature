@@ -35,29 +35,22 @@ const PostesPageComplete = () => {
 
   const loadConcours = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/concours');
-      setConcours(response.data || []);
-    } catch (err) {
-      console.error('Erreur lors du chargement des concours:', err);
-      setError('Erreur lors du chargement des concours');
-    } finally {
-      setLoading(false);
-    }
+      const unwrapList = (res) => Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
+      const res = await axios.get('http://localhost:8080/api/concours/actifs');
+      setConcours(unwrapList(res));
+    } catch (e) { setError('Erreur de chargement'); } finally { setLoading(false); }
   };
 
   const loadConcoursDetails = async (concoursId) => {
     try {
-      const [specialitesRes, centresRes] = await Promise.all([
+      const [specRes, centresRes] = await Promise.all([
         axios.get(`http://localhost:8080/api/concours/${concoursId}/specialites`),
         axios.get(`http://localhost:8080/api/concours/${concoursId}/centres`)
       ]);
-      
-      setSpecialitesDisponibles(specialitesRes.data || []);
-      setCentresDisponibles(centresRes.data || []);
-    } catch (err) {
-      console.error('Erreur chargement détails:', err);
-      setError('Erreur lors du chargement des détails du concours');
-    }
+      const unwrapList = (res) => Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
+      setSpecialitesDisponibles(unwrapList(specRes));
+      setCentresDisponibles(unwrapList(centresRes));
+    } catch (e) { setError('Erreur de chargement des détails'); }
   };
 
   const handleCandidater = async (concour) => {

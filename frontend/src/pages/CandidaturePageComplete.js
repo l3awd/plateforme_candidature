@@ -113,15 +113,15 @@ const CandidaturePageComplete = () => {
   const loadInitialData = async () => {
     try {
       setLoading(true);
+      const unwrapList = (res) => Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
       const [concoursRes, specialitesRes, centresRes] = await Promise.all([
-        axios.get('http://localhost:8080/api/concours'),
+        axios.get('http://localhost:8080/api/concours/actifs'),
         axios.get('http://localhost:8080/api/specialites'),
         axios.get('http://localhost:8080/api/centres')
       ]);
-      
-      setConcours(concoursRes.data || []);
-      setSpecialites(specialitesRes.data || []);
-      setCentres(centresRes.data || []);
+      setConcours(unwrapList(concoursRes));
+      setSpecialites(unwrapList(specialitesRes));
+      setCentres(unwrapList(centresRes));
       
       // Si vient de PostesPage, charger les options spécifiques
       if (fromPostes && preSelectedConcours) {

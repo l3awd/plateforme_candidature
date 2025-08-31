@@ -81,16 +81,15 @@ const CandidaturePage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        const unwrapList = (res) => Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
         const [concoursRes, specialitesRes, centresRes] = await Promise.all([
-          axios.get('http://localhost:8080/api/concours'),
+          axios.get('http://localhost:8080/api/concours/actifs'),
           axios.get('http://localhost:8080/api/specialites'),
           axios.get('http://localhost:8080/api/centres')
         ]);
-        
-        // Validation des données reçues
-        const concoursData = Array.isArray(concoursRes.data) ? concoursRes.data : [];
-        const specialitesData = Array.isArray(specialitesRes.data) ? specialitesRes.data : [];
-        const centresData = Array.isArray(centresRes.data) ? centresRes.data : [];
+        const concoursData = unwrapList(concoursRes);
+        const specialitesData = unwrapList(specialitesRes);
+        const centresData = unwrapList(centresRes);
         
         setConcours(concoursData);
         setSpecialites(specialitesData);

@@ -72,30 +72,21 @@ const PostesPageModerne = () => {
 
   // Chargement des données
   useEffect(() => {
-    const loadData = async () => {
+    const load = async () => {
       try {
-        setLoading(true);
-        setError('');
-        
+        const unwrapList = (res) => Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
         const [concoursRes, centresRes, specialitesRes] = await Promise.all([
-          axios.get('http://localhost:8080/api/concours'),
+          axios.get('http://localhost:8080/api/concours/actifs'),
           axios.get('http://localhost:8080/api/centres'),
           axios.get('http://localhost:8080/api/specialites')
         ]);
-        
-        setConcours(concoursRes.data || []);
-        setCentres(centresRes.data || []);
-        setSpecialites(specialitesRes.data || []);
-        
-      } catch (err) {
-        console.error('Erreur chargement:', err);
-        setError('Erreur lors du chargement des données. Vérifiez que le backend est démarré.');
-      } finally {
-        setLoading(false);
-      }
+        setConcours(unwrapList(concoursRes));
+        setCentres(unwrapList(centresRes));
+        setSpecialites(unwrapList(specialitesRes));
+      } catch (e) { setError('Erreur de chargement'); }
+      finally { setLoading(false); }
     };
-
-    loadData();
+    load();
   }, []);
 
   // Utilitaires

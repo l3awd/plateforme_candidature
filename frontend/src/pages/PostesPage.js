@@ -56,44 +56,22 @@ const PostesPage = () => {
 
   // Chargement des données
   useEffect(() => {
-    const loadData = async () => {
+    const load = async () => {
       try {
-        setLoading(true);
-        setError('');
-        
+        const unwrapList = (res) => Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
         const [concoursRes, centresRes, specialitesRes] = await Promise.all([
-          axios.get('http://localhost:8080/api/concours'),
+          axios.get('http://localhost:8080/api/concours/actifs'),
           axios.get('http://localhost:8080/api/centres'),
           axios.get('http://localhost:8080/api/specialites')
         ]);
-        
-        // Validation des données reçues
-        const concoursData = Array.isArray(concoursRes.data) ? concoursRes.data : [];
-        const centresData = Array.isArray(centresRes.data) ? centresRes.data : [];
-        const specialitesData = Array.isArray(specialitesRes.data) ? specialitesRes.data : [];
-        
-        setConcours(concoursData);
-        setCentres(centresData);
-        setSpecialites(specialitesData);
-        
-        console.log('Données chargées:', {
-          concours: concoursData.length,
-          centres: centresData.length,
-          specialites: specialitesData.length
-        });
-        
-      } catch (err) {
-        console.error('Erreur lors du chargement:', err);
-        setError('Erreur lors du chargement des données. Vérifiez que le backend est démarré.');
-        // Initialiser avec des tableaux vides en cas d'erreur
-        setConcours([]);
-        setCentres([]);
-        setSpecialites([]);
-      } finally {
-        setLoading(false);
-      }
+        setConcours(unwrapList(concoursRes));
+        setCentres(unwrapList(centresRes));
+        setSpecialites(unwrapList(specialitesRes));
+      } catch (e) {
+        setError('Erreur de chargement');
+      } finally { setLoading(false); }
     };
-    loadData();
+    load();
   }, []);
 
   // Filtrage des données
